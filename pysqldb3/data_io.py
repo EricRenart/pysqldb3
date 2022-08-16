@@ -1,8 +1,8 @@
 import subprocess
 import shlex
 
-from .cmds import *
-from .util import *
+from cmds import *
+from util import *
 
 
 def pg_to_sql(pg, ms, org_table, LDAP=False, spatial=True, org_schema=None, dest_schema=None, dest_table=None,
@@ -115,7 +115,7 @@ def sql_to_pg_qry(ms, pg, query, LDAP=False, spatial=True, dest_schema=None, pri
         dest_schema = pg.default_schema
 
     if not dest_table:
-        dest_table = '_{u}_{d}'.format(u=pg.user, d=datetime.datetime.now().strftime('%Y%m%d%H%M'))
+        dest_table = f"_{pg.user}_{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
 
     if spatial:
         spatial = 'MSSQLSpatial'
@@ -370,7 +370,7 @@ def pg_to_pg_qry(from_pg, to_pg, query, dest_schema=None, print_cmd=False, dest_
         dest_schema = to_pg.default_schema
 
     if not dest_table:
-        dest_table = '_{u}_{d}'.format(u=to_pg.user, d=datetime.datetime.now().strftime('%Y%m%d%H%M'))
+        dest_table = f"_{to_pg.user}_{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
 
     if spatial:
         nlt_spatial = ' '
