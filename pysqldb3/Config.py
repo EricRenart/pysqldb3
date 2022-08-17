@@ -109,7 +109,41 @@ def write_config(confi_path='.\config.cfg'):
         os.startfile(confi_path)
     return existing_sections
 
-
+def write_test_config(confi_path=".\tests\db_config.cfg"):
+    '''
+    Writes out a config file for use by the test suite.
+    :params: confi_path - the path to which the config file should be written
+    '''
+    open_config = False
+    required_lines = {'TYPE': '', 'SERVER': '', 'DB_NAME': '', 'DB_USER': '', 'DB_PASSWORD': ''}
+    required_sections = {
+        'PG_DB': required_lines,
+        'SECOND_PG_DB': required_lines,
+        'SQL_DB': required_lines,
+        'SECOND_SQL_DB': required_lines
+    }
+    existing_sections = read_config(confi_path)
+    for required_section in required_sections.keys():
+        if required_section not in existing_sections.keys():
+            # add known db parameters if not already present
+            if required_section == 'PG_DB' or required_section == 'SECOND_PG_DB':
+                existing_sections[required_section]['TYPE'] = 'PG'
+            elif required_section == 'SQL_DB' or required_section == 'SECOND_SQL_DB':
+                existing_sections[required_section]['TYPE'] = 'MS'
+            else:
+                # notify user and open the config file so they can add required info
+                print(f'\n Missing section {required_section} from config file. Please edit {confi_path} to add')
+                open_config = True
+                existing_sections[required_section] = required_sections[required_section]
+    # write the config
+    with open(confi_path) as config_file:
+        for section in existing_sections.keys():
+            config_file.write(f'\n[{section}]\n')
+            for key in existing_sections[section].keys():
+                config_file.write(f'{key}={existing_sections[section][key]}\n')
+    if open_config:
+         os.startfile(confi_path)
+    return existing_sections
 
 if __name__ == '__main__':
     sections= write_config(confi_path='.\config.cfg')

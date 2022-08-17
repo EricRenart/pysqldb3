@@ -8,9 +8,10 @@ import json
 import plotly.express as px
 import configparser
 import os
-from Config import write_config
+from Config import write_config, write_test_config
 
 write_config(confi_path=os.path.dirname(os.path.abspath(__file__)) + "\\config.cfg")
+write_test_config(confi_path=os.path.dirname(os.path.abspath(__file__)) + "\\tests\\db_config.cfg")
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\config.cfg")
 
@@ -1096,13 +1097,13 @@ class DbConnect:
 
         except SystemExit:
             # Drop stg table
-            self.drop_table(schema=schema, table='stg_{}'.format(table))
+            self.drop_table(schema=schema, table=f'stg_{table}')
             return False
 
         except Exception as e:
             print(e)
             # Drop stg table
-            self.drop_table(schema=schema, table='stg_{}'.format(table))
+            self.drop_table(schema=schema, table=f'stg_{table}')
             return False
 
         return True
