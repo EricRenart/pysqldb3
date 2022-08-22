@@ -136,7 +136,7 @@ def write_test_config(confi_path=".\tests\db_config.cfg"):
                 open_config = True
                 existing_sections[required_section] = required_sections[required_section]
     # write the config
-    with open(confi_path) as config_file:
+    with open(confi_path, 'w') as config_file:
         for section in existing_sections.keys():
             config_file.write(f'\n[{section}]\n')
             for key in existing_sections[section].keys():
