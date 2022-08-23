@@ -61,6 +61,13 @@ def get_gdal_data_path():
 
 
 def read_config(confi_path='.\config.cfg'):
+
+    """
+    Reads in the main config file (default config.cfg)
+    :param confi_path: path to the config file
+    :return sections(dict): dictionary of config options
+    """
+
     sections = defaultdict(dict)
 
     if os.path.isfile(confi_path):
