@@ -1,12 +1,30 @@
-from enum import Enum
-from osgeo import ogr
+from osgeo import ogr, gdal
 from typing import List, Optional
+import os
 import Config
+import subprocess
+import util
 
 """
 ogr_cmds.py
 This file contains functions for performing queries with GDAL and OGR.
 """
+
+def _get_geom_name_from_ogr_type(ogr_type):
+    """
+    Converts OGR geometry types to geometry type names.
+    """
+    name_type_dict = {ogr.wkbUnknown: "UNKNOWN",
+    ogr.wkbLineString: "POINT",
+    ogr.wkbPolygon: "LINESTRING",
+    ogr.wkbMultiPoint: "MULTIPOINT",
+    ogr.wkbMultiLineString: "MULTILINESTRING",
+    ogr.wkbMultiPolygon: "MULTIPOLYGON",
+    ogr.wkbGeometryCollection: "GEOMETRYCOLLECTION",
+    ogr.wkbNone: "NONE",
+    ogr.wkbLinearRing: "LINEARRING"}
+    return name_type_dict.get(ogr_type)
+
 
 """
 Shapefile OGR Commands
@@ -14,14 +32,48 @@ Shapefile OGR Commands
 def read_shapefile_pg(shp_path=None, tbl_name=None, schema='public', srid=2263, output_result=False):
     # type: (str, str, str, int, bool) -> Optional(str)
     """
-    Read in an ESRI shapefile and store its data in the Postgre database.
+    Read in an ESRI shapefile and store its data in the PostgreSQL database.
     :param shp_path: Path to the shapefile to be read
     :param tbl_name: Name of table in database to store shapefile data in
     :param schema: Database schema to use, default 'public'
     :param srid: Spatial reference identifier for coordinate system to use (default 2263)
     :param output_result: Whether to print out the results of the SQL query (default False)
     """
-    pass
+    # Make gdal throw exceptions
+    gdal.UseExceptions()
+
+    # Get db login credentials
+    db_config = Config.read_config()
+    
+    # Check for errors
+    if not os.path.isfile(shp_path):
+        raise FileNotFoundError('read_shapefile_pg(): file not found')
+    if not shp_path.endswith('.shp'):
+        raise TypeError('read_shapefile_pg(): provided path is not a Shapefile')
+
+    # Open the shapefile
+    shapefile_ds = ogr.GetDriverByName('ESRI Shapefile').Open(shp_path)
+    layer = shapefile_ds.GetLayer(0)
+    geo_type = layer.GetLayerDefn().GetGeomType()
+    geo_name = _get_geom_name_from_ogr_type(geo_type)
+
+    # Connect to db
+    db_config = Config.read_config().get('DEFAULT DATABASE')
+    host = db_config.get('host')
+    port = db_config.get('port')
+    dbname = db_config.get('dbname')
+    dbuser = db_config.get('user')
+    dbpass = db_config.get('password')
+    
+    # Construct neccessary command
+    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', db_config.get('GDAL DATA'),
+    '-nlt', 'PROMOTE_TO_MULTI', '-overwrite', '-a_srs', f"EPSG:{srid}", '-progress',
+    '-f', 'PostgreSQL', f'PG:"host={host} port={port} dbname={dbname} user={dbuser} password={dbpass}"',
+    {shp_path}, '-nln', f'{schema}.{tbl_name}']
+
+    # Execute command
+    subprocess.call(ogr_command)
+
 
 def read_shapefile_ms(shp_path=None, tbl_name=None, schema='public', srid=2263, output_result=False):
     # type: (str, str, str, int, bool) -> Optional(str)
