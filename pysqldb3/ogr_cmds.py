@@ -72,7 +72,9 @@ def read_shapefile_pg(shp_path=None, tbl_name=None, schema='public', srid=2263, 
     {shp_path}, '-nln', f'{schema}.{tbl_name}']
 
     # Execute command
-    subprocess.call(ogr_command)
+    query_result = subprocess.call(ogr_command, capture_output=output_result)
+    if query_result is not None:
+        return query_result
 
 
 def read_shapefile_ms(shp_path=None, tbl_name=None, schema='public', srid=2263, output_result=False):
@@ -85,7 +87,39 @@ def read_shapefile_ms(shp_path=None, tbl_name=None, schema='public', srid=2263, 
     :param srid: Spatial reference identifier for coordinate system to use (default 2263)
     :param output_result: Whether to print out the results of the SQL query (default False)
     """
-    pass
+    # Make gdal throw exceptions
+    gdal.UseExceptions()
+
+    # Connect to db
+    db_config = Config.read_config().get('DEFAULT DATABASE')
+    dbhost = db_config.get('host')
+    dbname = db_config.get('dbname')
+    dbuser = db_config.get('user')
+    dbpass = db_config.get('password')
+
+    # Check for errors
+    if not os.path.isfile(shp_path):
+        raise FileNotFoundError('read_shapefile_pg(): file not found')
+    if not shp_path.endswith('.shp'):
+        raise TypeError('read_shapefile_pg(): provided path is not a Shapefile')
+
+    # Open the shapefile
+    shapefile_ds = ogr.GetDriverByName('ESRI Shapefile')
+    layer = shapefile_ds.GetLayer(0)
+    geo_type = layer.GetLayerDefn().GetGeomType()
+    geo_name = _get_geom_name_from_ogr_type(geo_type)
+
+    # Construct neccessary command
+    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', db_config.get('GDAL DATA'),
+    '-nlt','PROMOTE_TO_MULTI','-overwrite','-a_srs', f'EPSG:{srid}', 
+    '-progress', '-f', 'MSSQLSpatial', f"MSSQL:server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}",
+    {shp_path}, '-nln', f'{schema}.{tbl_name}']
+
+    # execute command
+    query_result = subprocess.call(ogr_command, capture_output=output_result)
+    if query_result is not None:
+        return query_result
+    
 
 def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263, output_result=False):
     # type: (str, str, str, int, bool) -> Optional(str)
@@ -96,9 +130,30 @@ def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263
     :param export_path: Folder path to write out the shapefile to.
     :param srid: Spatial reference identifier for coordinate system to use (default 2263 NAD83/NYLI-ft)
     :param output_result: Whether to print out the results of the SQL query (default False)
-    :return: Path to shapefile on disk
     """
-    pass
+    # Make gdal throw exceptions
+    gdal.UseExceptions()
+    
+    # Get db login credentials
+    db_config = Config.read_config().get('DEFAULT DATABASE')
+    dbhost = db_config.get('host')
+    dbport = db_config.get('port')
+    dbname = db_config.get('dbname')
+    dbuser = db_config.get('user')
+    dbpass = db_config.get('password')
+
+    # Construct neccesary command
+    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', db_config.get('GDAL DATA'),
+    '-overwrite', '-f', 'ESRI Shapefile', f'{export_path}\{shp_name}', '-a_srs',
+    f'EPSG:{srid}', f'PG:"host={host} port={port} dbname={dbname} user={dbuser} password={dbpass}"',
+    '-sql', f'{tbl_name}']
+
+    # execute command
+    query_result = subprocess.call(ogr_command, capture_output=output_result)
+    if query_result is not None:
+        return query_result
+
+
 
 def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263, output_result=False):
     # type: (str, str, str, int, bool) -> Optional(str)
@@ -111,7 +166,26 @@ def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263
     :param output_result: Whether to print out the results of the SQL query (default False)
     :return: Path to shapefile on disk
     """
-    pass
+    # Make gdal throw exceptions
+    gdal.UseExceptions()
+
+    # Get db login credentials
+    db_config = Config.read_config().get('DEFAULT DATABASE')
+    dbhost = db_config.get('host')
+    dbname = db_config.get('dbname')
+    dbuser = db_config.get('user')
+    dbpass = db_config.get('password')
+
+    # Construct neccessary command
+    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', db_config.get('GDAL DATA'),
+    '-overwrite', '-f', 'ESRI Shapefile', f'{export_path}\{shp_name}', '-a_srs',
+    f'EPSG:{srid}', f"MSSQL:server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}",
+    '-sql', f'{tbl_name}']
+
+    # execute command
+    query_result = subprocess.call(ogr_command, capture_output=output_result)
+    if query_result is not None:
+        return query_result
 
 """
 Feature Class OGR Commands
