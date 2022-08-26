@@ -76,7 +76,6 @@ def read_config(confi_path='.\config.cfg'):
                     sections[section_header][k.strip()] = v.strip()
     return sections
 
-
 def write_config(confi_path='.\config.cfg'):
     open_config = False
     required_sections = {
