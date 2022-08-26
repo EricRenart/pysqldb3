@@ -65,7 +65,6 @@ ogr2ogr --config GDAL_DATA "{gdal_data}" -nlt PROMOTE_TO_MULTI -overwrite -a_srs
 """
 Db to Db IO 
 """
-
 PG_TO_SQL_LDAP_CMD = r"""
 ogr2ogr --config GDAL_DATA "{gdal_data}"  -overwrite -f MSSQLSpatial 
 "MSSQL:server={ms_server};database={ms_db};UID={ms_user};PWD={ms_pass}" 
@@ -81,6 +80,7 @@ PG:"host={pg_host} port={pg_port} dbname={pg_database} user={pg_user} password={
 {pg_schema}.{pg_table} -lco OVERWRITE=yes -nln {ms_schema}.{dest_name} {spatial} {nlt_spatial} -progress 
 --config MSSQLSPATIAL_USE_GEOMETRY_COLUMNS NO
 """.replace('\n', ' ')
+
 
 SQL_TO_PG_LDAP_QRY_CMD = r"""
 ogr2ogr --config GDAL_DATA "{gdal_data}" -overwrite -f "PostgreSQL" PG:"host={pg_host} 
