@@ -47,7 +47,6 @@ In Jupyter or Python shell, use `help(pysqldb3)` to show all public functions an
 1. [`feature_class_to_table`](#feature_class_to_table): Imports shape file feature class to database, uses GDAL to generate the table.
 
 ## Details 
-### connect
 **`DbConnect.connect(quiet=False)`**
 Connects to database. This is automatically called when creating a database connection instance with `DbConnect`, 
 it should not be needed to be manually called unless the database connection was closed. When called this will print 
@@ -80,7 +79,6 @@ Connection established 2021-08-04 10:28:34
 [Back to Table of Contents](#pysqldb-public-functions)
 
 
-### disconnect
 **`DbConnect.disconnect(quiet=False)`**
 Disconnects from database. When called this will print database connection information and closed timestamp. 
 ###### Parameters:
@@ -101,7 +99,6 @@ Connection closed 2021-08-04 10:31:46
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### check_conn
 **`DbConnect.check_conn()`**
 Checks and reconnects to connection if not currently connected.
 
@@ -118,7 +115,7 @@ Checks and reconnects to connection if not currently connected.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### log_temp_table
+
 **`DbConnect.log_temp_table(schema, table, owner, server=None, database=None, expiration=datetime.datetime.now() + datetime.timedelta(days=7))`**
 Writes tables to temp log to be deleted after expiration date. This method gets called automatically when a table is created by a `DbConnect` query. 
 ###### Parameters:
@@ -132,7 +129,7 @@ Writes tables to temp log to be deleted after expiration date. This method gets 
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### check_logs
+
 **`DbConnect.check_logs(schema=None)`**
 Queries the temp log associated with the user's login and returns a pandas `DataFrame` of results.  Defaults to the `default_schema` database schema.
 ###### Parameters:
@@ -150,7 +147,7 @@ tbl_id table_owner table_schema             table_name          created_on     e
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### clean_up_new_tables
+
 **`DbConnect.clean_up_new_tables()`**
 Drops all newly created tables from this `DbConnect` instance (current session).
 ###### Parameters:
@@ -185,7 +182,7 @@ tbl_id table_owner table_schema             table_name          created_on     e
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### blocking_me
+
 **`DbConnect.blocking_me()`**
 Queries database to check for queries or users currently blocking the user (defined in the connection). Postgres Only.
 ###### Parameters:
@@ -204,7 +201,7 @@ Index: []
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### kill_blocks
+
 **`DbConnect.kill_blocks()`**
 Will kill any queries that the user (defined in the connection) owns that are blocking. Postgres Only.
 ###### Parameters:
@@ -223,7 +220,7 @@ Will kill any queries that the user (defined in the connection) owns that are bl
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### my_tables
+
 **`DbConnect.my_tables(schema='public')`**
 Get a list of tables for which user (defined in the connection) is the owner Postgres Only.
 ###### Parameters:
@@ -250,7 +247,7 @@ Get a list of tables for which user (defined in the connection) is the owner Pos
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### table_exists
+
 **`DbConnect.table_exists(table, **kwargs)`**
 Checks if table exists in the database
 ###### Parameters:
@@ -268,7 +265,7 @@ True
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### get_schemas
+
 **`DbConnect.get_schemas()`**
 Gets a list of schemas available in the database
 ###### Parameters:
@@ -285,7 +282,7 @@ Gets a list of schemas available in the database
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### get_table_columns
+
 **`DbConnect.get_table_columns()`**
 Gets a list of columns and their data types in a specified table
 ##### Parameters:
@@ -315,7 +312,6 @@ Gets a list of columns and their data types in a specified table
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### query
 **`DbConnect.query(uery, strict=True, permission=True, temp=True, timeme=True, no_comment=False, comment='',
               lock_table=None, return_df=False, days=7)`**
 
@@ -396,7 +392,6 @@ LINE 1: ...able working.seths_temp_test_table; select * from working.se...
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### drop_table
 **`DbConnect.drop_table(schema, table, cascade=False, strict=True, server=None, database=None)`**
 Drops table if it exists from database and removes from the temp log table. If a table uses "" or [] because of case, spaces, or periods, they (""/[]) must be inputted explicitly.
 
@@ -438,7 +433,6 @@ False
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-### rename_column
 **`DbConnect.rename_column(schema, table, old_column, new_column)`**
 Renames a column to the new column name on the specified table.
 ###### Parameters:
@@ -477,8 +471,6 @@ Renames a column to the new column name on the specified table.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-### dfquery
 **`DbConnect.dfquery(query, strict=True, permission=True, temp=True, timeme=True, no_comment=False, comment='',
               lock_table=None, return_df=False, days=7)`**
 
@@ -536,7 +528,6 @@ Name: dta, dtype: int64
 <br>
 
 
-### print_last_query
 **`DbConnect.print_last_query()`**
 
 Prints latest query run with basic formatting. 
@@ -582,8 +573,6 @@ Prints latest query run with basic formatting.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-### dataframe_to_table_schema
 **`DbConnect.dataframe_to_table_schema(df, table, schema=None, overwrite=False, temp=True, allow_max_varchar=False,
                                   column_type_overrides=None, days=7)`**
 
@@ -623,8 +612,6 @@ Index: []
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-### dataframe_to_table
 **`DbConnect.dataframe_to_table(df, table, table_schema=None, schema=None, overwrite=False, temp=True,
                            allow_max_varchar=False, column_type_overrides=None, days=7)`**
 
@@ -670,8 +657,6 @@ Reading data into Database
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-#### csv_to_table
 
 **`DbConnect.csv_to_table(input_file=None, overwrite=False, schema=None, table=None, temp=True, sep=',',
                      long_varchar_check=False, column_type_overrides=None, days=7)`**
@@ -770,8 +755,6 @@ Reading data into Database
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-#### query_to_csv
 **`DbConnect.query_to_csv(query, strict=True, output_file=None, open_file=False, sep=',', quote_strings=True,
                      quiet=False)`**
 Exports query results to a csv file. 
@@ -808,8 +791,6 @@ Writing to E:\RIS\Staff Folders\Seth\sample\seth_sample_data.csv
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-#### query_to_map
 **`DbConnect.query_to_map(query, value_column, geom_column=None, id_column=None)`**
 
 Generates simple Plotly Choropleth Map from query results. 
@@ -860,11 +841,6 @@ Rely on on geom from districts table
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-
-
-
-#### query_to_shp
 **`DbConnect.query_to_shp(query, path=None, shp_name=None, cmd=None, gdal_data_loc=GDAL_DATA_LOC,
                      print_cmd=False, srid=2263)`**
 
@@ -904,8 +880,6 @@ generated from: select \"geom\" , \"segmentid\" , \"street\" from (select street
 <br>
 
 
-
-#### table_to_shp
 **`DbConnect.table_to_shp(table, schema=None, strict=True, path=None, shp_name=None, cmd=None,
                      gdal_data_loc=GDAL_DATA_LOC, print_cmd=False)`**
 
@@ -963,8 +937,6 @@ generated from: select \"geom\" , \"number_travel_lanes\" , \"carto_display_leve
 <br>
 
 
-
-#### table_to_csv
 **`DbConnect.table_to_csv(table, schema=None, strict=True, output_file=None, open_file=False, sep=',',
                      quote_strings=True)`**
 
@@ -1002,9 +974,6 @@ Writing to E:\RIS\Staff Folders\Seth\sample\lion_sample_shp.csv
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-
-#### shp_to_table
 
 **`DbConnect.shp_to_table(path=None, table=None, schema=None, shp_name=None, cmd=None,
                      port=None, gdal_data_loc=GDAL_DATA_LOC, precision=False, private=False, temp=True,
@@ -1054,9 +1023,6 @@ Imports ESRI Shapefile to database, uses GDAL to generate the table.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-
-
-#### feature_class_to_table
 
 **`DbConnect.feature_class_to_table(path, table, schema=None, shp_name=None, gdal_data_loc=GDAL_DATA_LOC, srid=2263,
                                private=False, temp=True, fc_encoding=None, print_cmd=False,
@@ -1137,7 +1103,6 @@ In Jupyter or Python shell, use `help(pysqldb)` to show all public functions and
 
 
 ## Details 
-### dfquery
 **`query.dfquery()`**
 
 Returns data from query as a Pandas `DataFrame`
@@ -1222,7 +1187,6 @@ LINE 1: ...able working.seths_temp_test_table; select * from working.se...
 1. ['rename_geom'](#rename_geom): Renames `wkb_geometry` column in table to `geom`, along with index.
 
 
-#### name_extension
 **`DbConnect.shapefile.name_extension(self, name)`**
 Adds `.shp` to the provided filename, if not already there.
 ###### Parameters:
@@ -1231,7 +1195,6 @@ Adds `.shp` to the provided filename, if not already there.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### write_shp
 **`DbConnect.shapefile.write_shp(self, print_cmd=False)`**
 Creates and writes a shapefile from the database using GDAL.
 ###### Parameters:
@@ -1240,21 +1203,18 @@ Creates and writes a shapefile from the database using GDAL.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### table_exists
 **`DbConnect.shapefile.table_exists(self)`**
 Wrapper for DbConnect `table_exists` method.
 
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### del_indexes
 **`DbConnect.shapefile.del_indexes(self)`**
 Drops indexes in this database object.
 
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### read_shp
 **`DbConnect.shapefile.read_shp(self, precision=False, private=False,shp_encoding=None, print_cmd=False)`**
 Reads in a shapefile as a table.
 ###### Parameters:
@@ -1266,7 +1226,6 @@ Reads in a shapefile as a table.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### read_feature_class
 **`DbConnect.shapefile.read_feature_class(self, private=False, print_cmd=False, fc_encoding=None)`**
 Read in a feature class of a shapefile as a table.
 
@@ -1278,7 +1237,6 @@ Read in a feature class of a shapefile as a table.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### rename_geom
 **`DbConnect.shapefile.rename_geom(self)`**
 Renames `wkb_geometry` column to `geom`, along with index.
 
@@ -1294,7 +1252,6 @@ Renames `wkb_geometry` column to `geom`, along with index.
 1. ['sql_to_pg'](#sql_to_pg): Migrates tables from MS SQL Server to PostgreSQL. Also generates spatial tables in pgSQL if present in MSSQLS.
 1. ['pg_to_pg'](#pg_to_pg): Migrates tables from an existing PostgreSQL database to another PostgreSQL database.
 
-#### pg_to_sql
 **`DbConnect.data_io.pg_to_sql(pg, ms, org_table, LDAP=False, spatial=True, org_schema=None, dest_schema=None, dest_print_cmd=False, temp=True)`**
 Migrates tables from PostgreSQL to MS SQL Server database, and generates spatial tables in output MS SQL Server database if they exist in PostgreSQL.
 ###### Parameters:
@@ -1311,7 +1268,6 @@ Migrates tables from PostgreSQL to MS SQL Server database, and generates spatial
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### sql_to_pg_qry
 **`DbConnect.data_io.sql_to_pg_qry(ms, pg, query, LDAP=false, spatial=True, dest_schema=None, print_cmd=False, temp=True, dest_table=None)`**
 Migrates the result of a query from MS SQL Server database to PostgreSQL, and generates spatial tables in output PostgreSQL database if they exist in MS SQL Server.
 ###### Parameters:
@@ -1328,7 +1284,6 @@ Migrates the result of a query from MS SQL Server database to PostgreSQL, and ge
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### sql_to_pg
 **`DbConnect.data_io.sql_to_pg(ms, pg, org_table, LDAP=False, spatial=True, org_schema=None, dest_schema=None, print_cmd=False, dest_table=None, temp=True, gdal_data_loc=GDAL_DATA_LOC, pg_encoding='UTF8')`**
 Migrates tables from MS SQL Server Database to PostgreSQL, and generates spatial tables in output postgreSQL database if they exist in MS SQL Server.
 ###### Parameters:
@@ -1347,7 +1302,6 @@ Migrates tables from MS SQL Server Database to PostgreSQL, and generates spatial
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### pg_to_pg
 **`DbConnect.data_io.pg_to_pg(from_pg, to_pg, org_table, org_schema=None, dest_schema=None, print_cmd=False, dest_table=None, spatial=True, temp=True)`**
 Migrates tables from one PostgreSQL database to another PostgreSQL database.
 ###### Parameters:
@@ -1390,7 +1344,7 @@ Migrates tables from one PostgreSQL database to another PostgreSQL database.
 ['file_loc'](#file_loc): Opens a file picker.
 ['parse_shp_path'](#parse_shp_path): Parse and extract the shapefile name from provided filepath.
 
-#### clean_query_special_characters
+
 **`DbConnect.utils.clean_query_special_characters(query_string)`**
 Cleans special characters from the provided query string.
 ###### Parameters:
@@ -1401,7 +1355,7 @@ Cleaned query string.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### clean_geom_column
+
 **`DbConnect.utils.clean_geom_column(db, table, schema)`**
 Checks for a column named `wkb_geometry` and renames it to `geom`.
 ###### Parameters:
@@ -1414,7 +1368,7 @@ Table with `wkb_geometry` columns renamed to `geom`
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### get_unique_table_schema_string
+
 **`DbConnect.utils.get_unique_table_schema_string(tbl_str, db_type)`**
 Takes a raw input for a pgSQL/MSSQLS table and distills the name in the way the database stores it. This allows for there to be one "cleaned" version for multiple variations of the same table, so they are not written into the log twice or erroneously *not* removed.
 
@@ -1431,7 +1385,7 @@ Unique table schema string.
 <br>
 
 
-#### get_query_table_schema_name
+
 **`DbConnect.utils.get_query_table_schema_name(tbl_str, db_type)`**
 The inverse of `get_unique_table_schema_string`. This takes a cleaned input from the log table and makes some minor changes to ensure pgSQL/MSSQLS interprets it correctly.
 
@@ -1447,7 +1401,6 @@ Table schema name.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### parse_table_string
 **`DbConnect.utils.parse_table_string(tbl_str, default_schema, db_type)`**
 Parses and extracts table name and schema from the provided table reference.
 ex. `server.schema.table`, `schema.table`, `table`
@@ -1461,7 +1414,6 @@ Schema name and table name, seperated by `.`
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### type_decoder
 **`DbConnect.utils.type_decoder(typ, varchar_length=500)`**
 Lazy type decoding from pandas to SQL. There are problems associated with `NaN` values for numeric types when stored as `Object` dtypes. This does not try to optimize for smallest-size dtype.
 ###### Parameters:
@@ -1473,7 +1425,6 @@ String representing datatype.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### clean_cell
 **`DbConnect.utils.clean_cell(x)`**
 Formats CSV cells for addition to SQL database.
 ###### Parameters:
@@ -1484,7 +1435,6 @@ Formatted CSV cell value as python `Object`.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### clean_column
 **`DbConnect.utils.clean_column(x)`**
 Reformats column names for database.
 ###### Parameters:
@@ -1495,7 +1445,6 @@ Reformatted column name with special characters replaced.
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### convert_geom_col
 **`DbConnect.utils.convert_geom_col(df, geom_name="geom")`**
 Converts `wkb_geometry` columns in Pandas `DataFrame` to specified name (default `geom`)
 ###### Parameters:
@@ -1507,7 +1456,6 @@ Converts `wkb_geometry` columns in Pandas `DataFrame` to specified name (default
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### clean_df_before_output
 **`DbConnect.utils.clean_df_before_output(df, geom_name="geom")`**
 Aggregate all data cleaning operations to be performed on pandas `DataFrame` before they're applied. This function does the following:
 - Converts `wkb_geometry` columns to `geom`
@@ -1521,7 +1469,6 @@ Aggregate all data cleaning operations to be performed on pandas `DataFrame` bef
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### file_loc
 **`DbConnect.utils.file_loc(typ='file', print_message=None)`**
 Open a tkinter file picker dialog to perform the operation specified in `typ` parameter.
 ###### Parameters:
@@ -1531,7 +1478,6 @@ Open a tkinter file picker dialog to perform the operation specified in `typ` pa
 [Back to Table of Contents](#pysqldb-public-functions)
 <br>
 
-#### parse_shp_path
 **`DbConnect.utils.parse_shp_path(path=None, shp_name=None)`**
 Standardizes extracting shapefile name from path. If `shp_name` is provided, it will override anything in the path.
 ###### Parameters:
