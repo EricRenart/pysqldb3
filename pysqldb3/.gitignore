@@ -133,3 +133,5 @@ dmypy.json
 
 # misc
 notes.txt
+config.cfg
+tests/db_config.cfg

@@ -157,7 +157,7 @@ def set_up_feature_class():
     zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_21d.zip')
     if not os.path.isfile(zip_path):
 
-        download_url = r'https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/nyclion_21d.zip'
+        download_url = r'https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/nyclion_22b.zip' # Updated LION link for 22b
         r = requests.get(download_url)
 
         with open(zip_path, 'wb') as f:
