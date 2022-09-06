@@ -4,6 +4,7 @@ import os
 import Config
 import subprocess
 import util
+import logging
 
 """
 ogr_cmds.py
@@ -69,6 +70,9 @@ def read_shapefile_pg(shp_path=None, tbl_name=None, schema='public', srid=2263, 
     {shp_path}, '-nln', f'{schema}.{tbl_name}']
 
     # Execute command
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
+
     query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
     if query_result is not None:
         return query_result
@@ -109,8 +113,11 @@ def read_shapefile_ms(shp_path=None, tbl_name=None, schema='public', srid=2263, 
     # Construct neccessary command
     ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
     '-nlt','PROMOTE_TO_MULTI','-overwrite','-a_srs', f'EPSG:{srid}', 
-    '-progress', '-f', 'MSSQLSpatial', f"MSSQL:server={dbhost}; port={dbport}; database={dbname}; \
+    '-progress', '-f', 'MSSQLSpatial', f"MSSQL:server={dbhost}; database={dbname}; \
      UID={dbuser}; PWD={dbpass}", {shp_path}, '-nln', f'{schema}.{tbl_name}']
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
+
 
     # execute query
     query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
@@ -144,6 +151,8 @@ def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263
     '-overwrite', '-f', 'ESRI Shapefile', f'{export_path}\{shp_name}', '-a_srs',
     f'EPSG:{srid}', f'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"',
     '-sql', f'{tbl_name}']
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
 
     # execute query
     query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
@@ -178,6 +187,8 @@ def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263
     '-overwrite', '-f', 'ESRI Shapefile', f'{export_path}\{shp_name}', '-a_srs',
     f'EPSG:{srid}', f"MSSQL:server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}",
     '-sql', f'{tbl_name}']
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
 
     # execute query
     query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
@@ -205,7 +216,7 @@ def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema=
     gdal_data = Config.get_gdal_data_path()
 
     # Get db login credentials
-    db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
+    db_config = Config.read_config('config.cfg').get('PG_DB')
     dbhost = db_config.get('host')
     dbport = db_config.get('port')
     dbname = db_config.get('dbname')
@@ -217,6 +228,8 @@ def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema=
     '-nlt','PROMOTE_TO_MULTI', '-overwrite', '-f', 'ESRI Shapefile', 
     f'PostgreSQL', f'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"',
     {geodatabase}, {fc_name}, '-nln', f'{schema}.{tbl_name}', '-progress']
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
 
     # execute query
     query_result = subprocess.call(ogr_command, capture_output=capture_output)
@@ -234,13 +247,13 @@ def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema=
     :param tbl_name: The name of the table to store feature class data in.
     :param schema: The db schema to use. Default 'public'
     :param srid: Spatial reference identifier for coordinate system to use (default 2263 NAD83/NYLI-ft)
-    :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param capture_output: Whether to return the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
 
     # Get db login credentials
-    db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
+    db_config = Config.read_config('config.cfg').get('PG_DB')
     dbhost = db_config.get('host')
     dbport = db_config.get('port')
     dbname = db_config.get('dbname')
@@ -252,8 +265,10 @@ def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema=
     '-overwrite', '-f', 'ESRI Shapefile', f'MSSQLSpatial', 
     f'"MSSQL:server={dbhost}; port={dbport}; database={dbname}; UID={dbuser}; PWD={dbpass}"',
     {geodatabase}, {fc_name}, '-nln', f'{schema}.{tbl_name}', '-progress']
-
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
     # execute query
+
     query_result = subprocess.call(ogr_command, capture_output=capture_output)
     if query_result is not None:
         return query_result
@@ -263,8 +278,8 @@ def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema=
 """
 DB-DB IO Commands
 """
-def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='public', use_ldap=False, spatial=False, capture_output=False):
-    # type: (str, str, str, str, bool, bool, bool) -> Optional(str)
+def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='public', use_ldap=False, spatial=False, srid=2263, capture_output=False):
+    # type: (str, str, str, str, bool, bool, int, bool) -> Optional(str)
     """
     Export a table from a PostgreSQL database to a MSSQL Server database.
     :param source_table: The name of the source PostgreSQL table to convert to MSSQL.
@@ -273,15 +288,16 @@ def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='
     :param ms_schema: Database schema to use for destination MSSQL database (default 'public')
     :param use_ldap: Whether to use Lightweight Directory Access Protocol (LDAP) for db connection. (default False)
     :param spatial: Flag for spatial table (defaults to True)
-    :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param srid: The SRID number for the CRS to use, default 2263 (NAD83-NYLI-ft)
+    :param capture_output: Whether to return the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
     gdal_data = Config.get_gdal_data_path()
 
     # Get login credentials for databases
-    pg_db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
-    ms_db_config = Config.read_config('tests/db_config.cfg').get('MS_DB')
+    pg_db_config = Config.read_config('tests/config.cfg').get('PG_DB')
+    ms_db_config = Config.read_config('tests/config.cfg').get('MS_DB')
 
     ms_dbhost = ms_db_config.get('SERVER')
     ms_dbname = ms_db_config.get('DB_NAME')
@@ -300,20 +316,21 @@ def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='
     f"{pg_schema}.{pg_table}", '-lco', 'OVERWRITE=yes', '-nln', f'{ms_schema}.{ms_table}']
 
     if spatial:
-        ogr_command.append(['-a_srs','EPSG:2263'])
+        ogr_command.append(['-a_srs',f'EPSG:{srid}'])
     else:
         ogr_command.append([' ','-nlt','NONE'])
 
     ogr_command.append(['-progress', '--config', 'MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO'])
-
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
     # excecute query
     query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
     if query_result is not None:
         return query_result
     
 
-def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='public', use_ldap=False, spatial=False, as_query=True, capture_output=False):
-    # type: (str, str, str, str, bool, bool, bool, bool) -> Optional(str)
+def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='public', use_ldap=False, spatial=False, as_query=True, srid=2263, capture_output=False):
+    # type: (str, str, str, str, bool, bool, bool, int, bool) -> Optional(str)
     """
     Export a table from a MS SQL Server database to a PostgreSQL database.
     :param source_table: The name of the source MSSQL table to convert to PostgreSQL.
@@ -322,7 +339,8 @@ def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='
     :param ms_schema: Database schema to use for source MSSQL database (default 'public')
     :param use_ldap: Whether to use Lightweight Directory Access Protocol (LDAP) for db connection. (default False)
     :param as_query: Whether to run this command as an SQL Query (default False)
-    :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param srid: The SRID number for the CRS to use, default 2263 (NAD83-NYLI-ft)
+    :param capture_output: Whether to return the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
@@ -348,17 +366,19 @@ def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='
     '-f', 'MSSQLSpatial',f'"MSSQL:server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}"',
     f'{ms_schema}.{ms_table}', '-lco', 'OVERWRITE=yes', '-nln', f'{pg_schema}.{pg_table}']
     if spatial:
-        ogr_command.append(['EPSG:2263'])
+        ogr_command.append([f'EPSG:{srid}'])
     ogr_command.append(['-progress'])
 
     # excecute query
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
     query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
     if query_result is not None:
         return query_result
 
 
-def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', dest_schema='public', sql_query=None, spatial=True, capture_output=False):
-    # type: (str, str, str, str, bool, bool, bool) -> Optional(str)
+def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', dest_schema='public', sql_query=None, spatial=True, srid=2263, capture_output=False):
+    # type: (str, str, str, str, bool, bool, int, bool) -> Optional(str)
     """
     Export a table from a PostgreSQL database to another PostgreSQL database.
     :param source_table: The name of the source PostgreSQL table to export.
@@ -368,7 +388,8 @@ def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', d
     :param sql_query: SQL Query to run on source db
     :param use_ldap: Whether to use Lightweight Directory Access Protocol (LDAP) for db connection. (default False)
     :param spatial: Flag for spatial table (defaults to True)
-    :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param srid: The SRID number for the CRS to use, default 2263 (NAD83-NYLI-ft)
+    :param capture_output: Whether to return the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
@@ -399,10 +420,12 @@ def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', d
         ogr_command.append(['-sql', sql_query])
 
     if spatial:
-        ogr_command.append(['EPSG:2263'])
+        ogr_command.append([f'EPSG:{srid}'])
     
     ogr_command.append(['-progress'])
 
+    logging.info('Executing the following OGR command:')
+    logging.info(str(ogr_command))
     # execute command
     result = subprocess.check_output(ogr_command, capture_output=capture_output)
     if result is not None:
@@ -418,7 +441,7 @@ def pg_bulk_file_to_table(paths, dest_table, schema='public', capture_output=Fal
     :param paths: List of filepaths to import into table (corresponds to )
     :param dest_table: Name of table to be created in destination database
     :param schema: Database schema to use for import, default 'public'
-    :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param capture_output: Whether to return the results of the SQL query (default False)
     """
     pass
 
@@ -429,6 +452,6 @@ def ms_bulk_file_to_table(paths, dest_table, schema='public', capture_output=Fal
     :param paths: List of filepaths to import into table (corresponds to )
     :param dest_table: Name of table to be created in destination database
     :param schema: Database schema to use for import, default 'public'
-    :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param capture_output: Whether to return the results of the SQL query (default False)
     """
     pass
