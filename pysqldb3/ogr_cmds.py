@@ -1,7 +1,7 @@
 from osgeo import ogr, gdal
 from typing import List, Optional
 import os
-import Config
+from . import Config
 import subprocess
 import util
 import logging
