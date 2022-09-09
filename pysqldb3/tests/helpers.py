@@ -48,11 +48,46 @@ def set_up_test_table_sql(sql, schema='dbo'):
     insert into {s}.{t} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
     """.format(s=schema, t=table_name))
 
+def set_up_simple_test_table_sql(sql, table_name, schema='dbo'):
+    
+    # Append db username to test table name
+    table_name = f'{table_name}_{sql.user}'
+
+    # Query to create table. No fancy randomness here - just two int columns with placeholder values
+    sql.query(f"""
+         CREATE TABLE {schema}.{table_name} (test_col1 int, test_col2 int);
+         INSERT INTO {schema}.{table_name} VALUES(1, 2);
+         INSERT INTO {schema}.{table_name} VALUES(3, 4);
+         """)
 
 def clean_up_test_table_sql(sql, schema='dbo'):
     table_name = 'sql_test_table_{}'.format(sql.user)
     sql.drop_table(table=table_name, schema=schema)
 
+def clean_up_simple_test_table_sql(sql, table_name, schema='dbo'):
+    # Append db username to test table name
+    table_name = f'{table_name}_{sql.user}'
+
+    # drop table
+    sql.drop_table(table=table_name, schema=schema)
+
+def set_up_simple_test_table_pg(db, table_name, schema='working'):
+    # Append db username to test table name
+    table_name = f'{table_name}_{db.user}'
+
+    # Query to create table. No fancy randomness here - just two int columns with placeholder values
+    db.query(f"""
+         CREATE TABLE dbo.{table_name} (test_col1 int, test_col2 int);
+         INSERT INTO dbo.{table_name} VALUES(1, 2);
+         INSERT INTO dbo.{table_name} VALUES(3, 4);
+         """)
+
+def clean_up_simple_test_table_pg(db, table_name, schema='working'):
+    # Append db username to test table name
+    table_name = f'{table_name}_{db.user}'
+
+    # Drop table
+    db.drop_table(table=table_name, schema=schema)
 
 def set_up_test_table_pg(db, schema='working'):
     """
