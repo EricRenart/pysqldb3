@@ -132,7 +132,9 @@ dmypy.json
 *.idea
 
 # misc
+.vscode
 notes.txt
 config.cfg
 tests/db_config.cfg
 Test.ipynb
+Open Notebook.onetoc2
