@@ -4,7 +4,7 @@ import pandas as pd
 
 from .. import pysqldb3 as pysqldb
 from ..shapefile import Shapefile
-from . import helpers
+from . import TestHelpers
 
 
 # todo - issues #######################################################################
@@ -40,8 +40,8 @@ pg_schema = 'working'
 class TestReadShpPG:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_shapefile()
-        helpers.set_up_test_table_pg(db)
+        TestHelpers.set_up_shapefile()
+        TestHelpers.set_up_test_table_pg(db)
 
     def test_read_shp_basic(self):
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))+'/test_data'
@@ -179,14 +179,14 @@ class TestReadShpPG:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_shapefile()
-        helpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_shapefile()
+        TestHelpers.clean_up_test_table_pg(db)
 
 
 class TestReadShpMS:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_shapefile()
+        TestHelpers.set_up_shapefile()
 
     def test_read_shp_basic(self):
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))+'/test_data'
@@ -322,13 +322,13 @@ class TestReadShpMS:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_shapefile()
+        TestHelpers.clean_up_shapefile()
 
 
 class TestWriteShpPG:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_test_table_pg(db)
+        TestHelpers.set_up_test_table_pg(db)
 
     def test_write_shp_table(self):
         db.query(f"""
@@ -542,7 +542,7 @@ class TestWriteShpPG:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_pg(db)
 
 
 class TestWriteShpMS:

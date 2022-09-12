@@ -214,7 +214,7 @@ def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema=
     gdal_data = Config.get_gdal_data_path()
 
     # Get db login credentials
-    db_config = Config.read_config('config.cfg').get('PG_DB')
+    db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
     dbhost = db_config.get('host')
     dbport = db_config.get('port')
     dbname = db_config.get('dbname')
@@ -251,7 +251,7 @@ def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema=
     gdal.UseExceptions()
 
     # Get db login credentials
-    db_config = Config.read_config('config.cfg').get('PG_DB')
+    db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
     dbhost = db_config.get('host')
     dbport = db_config.get('port')
     dbname = db_config.get('dbname')
@@ -294,7 +294,7 @@ def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='
     gdal_data = Config.get_gdal_data_path()
 
     # Get login credentials for databases
-    pg_db_config = Config.read_config('tests/config.cfg').get('PG_DB')
+    pg_db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
     ms_db_config = Config.read_config('tests/config.cfg').get('MS_DB')
 
     ms_dbhost = ms_db_config.get('SERVER')

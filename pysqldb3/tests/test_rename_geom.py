@@ -5,7 +5,7 @@ import configparser
 import pytest
 
 from .. import util, pysqldb3 as pysqldb
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -31,8 +31,8 @@ table = 'test_feature_class_{}'.format(db.user)
 class TestRenamesGeomPg:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_feature_class()
-        helpers.set_up_shapefile()
+        TestHelpers.set_up_feature_class()
+        TestHelpers.set_up_shapefile()
 
     @pytest.mark.order1
     def test_rename_geom_fc(self):
@@ -142,14 +142,14 @@ class TestRenamesGeomPg:
     @classmethod
     def teardown_class(cls):
         # helpers.clean_up_feature_class()
-        helpers.clean_up_shapefile()
+        TestHelpers.clean_up_shapefile()
 
 
 class TestRenamesGeomMs:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_feature_class()
-        helpers.set_up_shapefile()
+        TestHelpers.set_up_feature_class()
+        TestHelpers.set_up_shapefile()
 
     @pytest.mark.order3
     def test_rename_geom_fc(self):
@@ -264,4 +264,4 @@ class TestRenamesGeomMs:
     @classmethod
     def teardown_class(cls):
         # helpers.clean_up_feature_class()
-        helpers.clean_up_shapefile()
+        TestHelpers.clean_up_shapefile()

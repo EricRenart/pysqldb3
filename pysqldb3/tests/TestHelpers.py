@@ -4,6 +4,7 @@ import pandas as pd
 from .. import shapefile
 from .. import pysqldb3 as psdb3
 import subprocess
+import shutil
 import requests
 import zipfile
 from configparser import ConfigParser
@@ -206,11 +207,9 @@ def set_up_feature_class():
 
 def clean_up_feature_class():
     zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_21d.zip')
-    fldr = os.path.dirname(zip_path)+'/lion'
-    gdb = "lion.gdb"
+    fldr = os.path.dirname(zip_path)+'/lion/lion.gdb'
     print ('Deleting any existing gdb')
-    # os.remove(os.path.join(fldr, gdb))
-    os.rmdir(fldr)
+    shutil.rmtree(fldr)
 
 # def set_up_fc_and_shapefile():
 #     """

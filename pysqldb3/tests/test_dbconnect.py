@@ -4,7 +4,7 @@ import os
 import configparser
 import pandas as pd
 
-from . import helpers
+from . import TestHelpers
 from .. import pysqldb3 as pysqldb
 
 test_config = configparser.ConfigParser()
@@ -28,8 +28,8 @@ table_for_testing_logging = 'testing_logging_table_{}'.format(db.user)
 class TestMisc:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_test_table_pg(db)
-        helpers.set_up_test_table_sql(sql, sql.default_schema)
+        TestHelpers.set_up_test_table_pg(db)
+        TestHelpers.set_up_test_table_sql(sql, sql.default_schema)
 
     def test_get_schemas_pg(self):
         schemas = db.get_schemas()
@@ -190,15 +190,15 @@ class TestMisc:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
-        helpers.clean_up_test_table_sql(sql)
+        TestHelpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_sql(sql)
 
 
 class TestCheckLog:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_test_table_pg(db)
-        helpers.set_up_test_table_sql(sql)
+        TestHelpers.set_up_test_table_pg(db)
+        TestHelpers.set_up_test_table_sql(sql)
 
     def test_check_log_pg(self):
         logs_df = db.check_logs()
@@ -218,14 +218,14 @@ class TestCheckLog:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
-        helpers.clean_up_test_table_sql(sql)
+        TestHelpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_sql(sql)
 
 
 class TestLogging:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_test_table_pg(db)
+        TestHelpers.set_up_test_table_pg(db)
 
     def test_query_temp_logging(self):
         db.query("""
@@ -405,7 +405,7 @@ class TestLogging:
         db.drop_table(table=table_for_testing_logging, schema='working')
 
     def test_excel_to_table_logging(self):
-        helpers.set_up_xls()
+        TestHelpers.set_up_xls()
 
         fp = os.path.dirname(os.path.abspath(__file__)) + '/test_data/test_xls.xls'
 
@@ -458,7 +458,7 @@ class TestLogging:
         db.drop_table(table=table_for_testing_logging, schema='working')
 
     def test_shp_to_table_logging(self):
-        helpers.set_up_shapefile()
+        TestHelpers.set_up_shapefile()
 
         before_log_df = db.dfquery("""
                     SELECT *
@@ -485,7 +485,7 @@ class TestLogging:
 
         # Cleanup
         db.drop_table(table=table_for_testing_logging, schema='working')
-        helpers.clean_up_shapefile()
+        TestHelpers.clean_up_shapefile()
 
     def test_bulk_csv_to_table_logging(self):
         fp = os.path.dirname(os.path.abspath(__file__)) + '/test_data/test_bulk.csv'
@@ -911,4 +911,4 @@ class TestLogging:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_pg(db)

@@ -1,7 +1,7 @@
 import os
 import configparser
 from .. import pysqldb3 as pysqldb
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -33,7 +33,7 @@ src_table = 'sql_test_table_{}'.format(sql_src.user)
 class TestQueryCreatesTableLoggingSql:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_test_table_sql(sql_src)
+        TestHelpers.set_up_test_table_sql(sql_src)
 
     def test_create_table_basic(self):
         # make sure table doesnt exist
@@ -78,7 +78,7 @@ class TestQueryCreatesTableLoggingSql:
         assert not sql_src.data
 
     def test_create_table_cross_db(self):
-        helpers.set_up_test_table_sql(sql_src)
+        TestHelpers.set_up_test_table_sql(sql_src)
 
         # make sure table doesnt exist
         sql_dest.drop_table(sql_dest.default_schema, test_table)
@@ -156,7 +156,7 @@ class TestQueryCreatesTableLoggingSql:
 
         @classmethod
         def teardown_class(cls):
-            helpers.clean_up_test_table_sql(sql_dest)
+            TestHelpers.clean_up_test_table_sql(sql_dest)
 
 class TestQueryCreatesTableLoggingPgSql:
     # cross db queries are not currently permitted in our env

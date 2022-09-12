@@ -4,7 +4,7 @@ import os
 from .. import pysqldb3 as pysqldb
 from ..shapefile import Shapefile
 from ..sql import *
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -28,7 +28,7 @@ class TestSHPDeleteIndexPG:
     @classmethod
     def setup_class(cls):
         # Setup; create sample file
-        helpers.set_up_shapefile()
+        TestHelpers.set_up_shapefile()
 
     def test_shp_delete_index_pg_basic(self):
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))+'/test_data'
@@ -64,14 +64,14 @@ class TestSHPDeleteIndexPG:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_shapefile()
+        TestHelpers.clean_up_shapefile()
 
 
 class TestSHPDeleteIndexMS:
     @classmethod
     def setup_class(cls):
         # Setup; create sample file
-        helpers.set_up_shapefile()
+        TestHelpers.set_up_shapefile()
 
     def test_shp_delete_index_ms_basic(self):
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))+'/test_data'
@@ -144,4 +144,4 @@ class TestSHPDeleteIndexMS:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_shapefile()
+        TestHelpers.clean_up_shapefile()

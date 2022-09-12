@@ -5,7 +5,7 @@ import configparser
 import pandas as pd
 
 from .. import pysqldb3 as pysqldb, data_io
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -33,7 +33,7 @@ test_pg_to_pg_qry_table = f'tst_pg_to_pg_qry_table_{db.user}'
 class TestPgToSql:
      @classmethod
      def setup_class(cls):
-         helpers.set_up_test_table_pg(db)
+         TestHelpers.set_up_test_table_pg(db)
 
      def test_pg_to_sql_basic(self, schema='working', table_name=test_pg_to_sql_table):
          sql.drop_table(schema=sql.default_schema, table=table_name)
@@ -224,7 +224,7 @@ class TestPgToSql:
 
      @classmethod
      def teardown_class(cls):
-         helpers.clean_up_test_table_pg(db)
+         TestHelpers.clean_up_test_table_pg(db)
 
 
 class TestSqlToPgQry:
@@ -234,8 +234,8 @@ class TestSqlToPgQry:
          assert not db.table_exists(table=pg_table_name)
 
          # Add test_table
-         helpers.clean_up_simple_test_table_sql(sql, table_name=sql_table_name)
-         helpers.set_up_simple_test_table_sql(sql, table_name=sql_table_name)
+         TestHelpers.clean_up_simple_test_table_sql(sql, table_name=sql_table_name)
+         TestHelpers.set_up_simple_test_table_sql(sql, table_name=sql_table_name)
 
          # sql_to_pg_qry
          data_io.sql_to_pg_qry(sql, db, query=f"SELECT * FROM dbo.{sql_table_name}", dest_table=pg_table_name, print_cmd=True)
@@ -489,7 +489,7 @@ class TestSqlToPg:
 class TestPgToPg:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_test_table_pg(db)
+        TestHelpers.set_up_test_table_pg(db)
 
     def test_pg_to_pg_basic_table(self):
         # Must have RIS DB info in db_config.cfg [SECOND_PG_DB] section
@@ -600,7 +600,7 @@ class TestPgToPg:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_pg(db)
         db.clean_up_new_tables()
         sql.clean_up_new_tables()
 

@@ -4,7 +4,7 @@ import configparser
 import pandas as pd
 
 from .. import pysqldb3 as pysqldb
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -29,7 +29,7 @@ class TestCsvToTablePG:
     @classmethod
     def setup_class(cls):
         # helpers.set_up_test_table_pg(db)
-        helpers.set_up_test_csv()
+        TestHelpers.set_up_test_csv()
 
     def test_csv_to_table_basic(self):
         # csv_to_table
@@ -185,7 +185,7 @@ class TestCsvToTablePG:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_pg(db)
         db.clean_up_new_tables()
 
 

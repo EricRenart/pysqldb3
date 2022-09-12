@@ -3,7 +3,7 @@ import os
 import configparser
 import pytest
 
-from . import helpers
+from . import TestHelpers
 from .. import pysqldb3 as pysqldb
 
 config = configparser.ConfigParser()
@@ -31,7 +31,7 @@ table = 'test_feature_class_{}'.format(db.user)
 class TestFeatureClassToTablePg:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_feature_class()
+        TestHelpers.set_up_feature_class()
 
     @pytest.mark.order1
     def test_import_fc_basic(self):
@@ -199,7 +199,7 @@ class TestFeatureClassToTablePg:
 class TestFeatureClassToTableMs:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_feature_class()
+        TestHelpers.set_up_feature_class()
 
     @pytest.mark.order9
     def test_import_fc_basic(self):

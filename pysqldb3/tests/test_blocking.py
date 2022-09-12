@@ -4,7 +4,7 @@ from multiprocessing import Process, Queue
 
 import configparser
 from .. import pysqldb3 as pysqldb
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -94,7 +94,7 @@ def blockfunc4(q):
 class TestBlocking:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_two_test_tables_pg(db)
+        TestHelpers.set_up_two_test_tables_pg(db)
 
     def test_blocking_me(self):
         """
@@ -224,7 +224,7 @@ class TestBlocking:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_two_test_tables_pg(db)
+        TestHelpers.clean_up_two_test_tables_pg(db)
         db.clean_up_new_tables()
         db2.clean_up_new_tables()
         db3.clean_up_new_tables()

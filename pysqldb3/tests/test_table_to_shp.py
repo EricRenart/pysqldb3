@@ -1,7 +1,7 @@
 import os
 import configparser
 from .. import pysqldb3 as pysqldb
-from . import helpers
+from . import TestHelpers
 
 #################################################################################
                         # only doing basic tests since it just calls
@@ -142,7 +142,7 @@ class TestTableToShpPg:
 class TestTableToShpMs:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_schema(sql)
+        TestHelpers.set_up_schema(sql)
 
 
     def test_table_to_shp_basic(self):
@@ -268,7 +268,7 @@ class TestTableToShpMs:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_sql(sql, schema=ms_schema)
+        TestHelpers.clean_up_test_table_sql(sql, schema=ms_schema)
         sql.query("drop table {}.{}".format(ms_schema, sql.log_table))
         sql.clean_up_new_tables()
         # helpers.clean_up_schema(sql, schema=ms_schema)

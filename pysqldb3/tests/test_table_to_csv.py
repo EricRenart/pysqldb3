@@ -6,7 +6,7 @@ import pandas as pd
 from pytest import raises
 
 from .. import pysqldb3 as pysqldb
-from . import helpers
+from . import TestHelpers
 
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
@@ -37,7 +37,7 @@ class Test_Table_to_CSV_PG:
     @classmethod
     def setup_class(cls):
         # helpers.set_up_schema(db, ms_schema=ms_schema)
-        helpers.set_up_test_table_pg(db, schema=pg_schema)
+        TestHelpers.set_up_test_table_pg(db, schema=pg_schema)
 
     def test_table_to_csv_check_file(self):
         schema = pg_schema
@@ -396,7 +396,7 @@ class Test_Table_to_CSV_PG:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_pg(db)
+        TestHelpers.clean_up_test_table_pg(db)
         # helpers.clean_up_schema(db)
         db.clean_up_new_tables()
 
@@ -409,8 +409,8 @@ class Test_Table_to_CSV_PG:
 class Test_Table_to_CSV_MS:
     @classmethod
     def setup_class(cls):
-        helpers.set_up_schema(sql, ms_schema=ms_schema)
-        helpers.set_up_test_table_sql(sql, schema=ms_schema)
+        TestHelpers.set_up_schema(sql, ms_schema=ms_schema)
+        TestHelpers.set_up_test_table_sql(sql, schema=ms_schema)
 
     def test_table_to_csv_check_file_bad_path(self):
         schema = ms_schema
@@ -813,7 +813,7 @@ class Test_Table_to_CSV_MS:
 
     @classmethod
     def teardown_class(cls):
-        helpers.clean_up_test_table_sql(sql, schema=ms_schema)
+        TestHelpers.clean_up_test_table_sql(sql, schema=ms_schema)
         sql.query("drop table {}.{}".format(ms_schema, sql.log_table))
         sql.clean_up_new_tables()
         # helpers.clean_up_schema(sql, ms_schema)
