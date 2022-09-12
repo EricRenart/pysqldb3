@@ -6,6 +6,7 @@ from .. import pysqldb3 as psdb3
 import subprocess
 import requests
 import zipfile
+from configparser import ConfigParser
 from xlrd import open_workbook
 from xlutils.copy import copy
 
@@ -343,6 +344,8 @@ def get_pg_dbc_instance(section_prefix=None, temp_tables=True):
         """
         Gets a new PostgreSQL DbConnect, reading parameters from config
         """
+        config = ConfigParser()
+        config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
         sec_str = 'PG_DB'
         if section_prefix is not None:
             sec_str = f'{section_prefix}_{sec_str}'
@@ -357,6 +360,8 @@ def get_ms_dbc_instance(section_prefix=None, temp_tables=True):
         """
         Gets a new MS SQL Server DbConnect, reading parameters from config
         """
+        config = ConfigParser()
+        config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
         sec_str = 'MS_DB'
         if section_prefix is not None:
             sec_str = f'{section_prefix}_{sec_str}'
