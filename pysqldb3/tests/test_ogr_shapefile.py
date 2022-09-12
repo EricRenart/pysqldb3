@@ -7,6 +7,7 @@ class TestOGRShapefile():
 
     @classmethod
     def setup(cls):
+        # Delete shapefile if exists
         if os.path.exists('test_data/test.shp'):
             helpers.clean_up_shapefile()
         helpers.set_up_shapefile()
