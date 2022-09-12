@@ -159,8 +159,6 @@ def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263
     if query_result is not None:
         return query_result
 
-
-
 def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263, capture_output=False):
     # type: (str, str, str, int, bool) -> Optional(str)
     """

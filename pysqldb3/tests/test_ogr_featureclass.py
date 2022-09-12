@@ -1,20 +1,14 @@
 import os
-from configparser import ConfigParser
-
-import ogr_cmds
+from .. import ogr_cmds
 from . import helpers
-from ogr_cmds import *
-
-config = ConfigParser()
-config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
 
 class TestOGRFeatureclass():
 
     @classmethod
     def setup(cls):
-        # Set up featureclass if it doesn't exist
-        if not os.path.exists('tests/test_data/lion/lion.gdb'):
-            helpers.set_up_feature_class()
+        if os.path.exists('tests/test_data/lion/lion.gdb'):
+            helpers.clean_up_feature_class()
+        helpers.set_up_feature_class()
 
     def test_ogr_pg_to_featureclass(self):
         tblname = 'test_ogr_pg_to_featureclass_data_table'
