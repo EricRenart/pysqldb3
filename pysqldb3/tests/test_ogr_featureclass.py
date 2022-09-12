@@ -1,6 +1,5 @@
 import os
 from configparser import ConfigParser
-from osgeo import ogr, gdal
 from . import helpers
 from ogr_cmds import *
 from .. import pysqldb3 as psdb3
@@ -30,7 +29,7 @@ test_fc_name_2 = 'TEST_FC2'
 ms_schema = 'risadmin'
 pg_schema = 'working'
 
-class TestOGRFeatureclassIO():
+class TestOGRFeatureclass():
 
     @classmethod
     def setup(cls):

@@ -327,8 +327,8 @@ class TestSqlToPgQry:
          sql.drop_table(schema='dbo', table=table_name)
          sql.query(f"""
          CREATE TABLE dbo.{table_name} (test_col1 int, test_col2 int);
-         INSERT INTO dbo.{table_name} VALUES(1, 2);
-         INSERT INTO dbo.{table_name} VALUES(3, 4);
+         INSERT INTO dbo.{table_name} (test_col1, test_col2) VALUES (1, 2);
+         INSERT INTO dbo.{table_name} (test_col1, test_col2) VALUES (3, 4);
          """)
 
          # sql_to_pg_qry
@@ -389,8 +389,8 @@ class TestSqlToPg:
          sql.drop_table(schema='dbo', table=table)
          sql.query(f"""
           CREATE TABLE dbo.{table} (test_col1 int, test_col2 int);
-          INSERT INTO dbo.{table} VALUES(1, 2);
-          INSERT INTO dbo.{table} VALUES(3, 4);
+          INSERT INTO dbo.{table} (test_col1, test_col2) VALUES (1, 2);
+          INSERT INTO dbo.{table} (test_col1, test_col2) VALUES (3, 4);
           """)
 
          # Sql_to_pg
@@ -431,8 +431,8 @@ class TestSqlToPg:
         sql.drop_table(schema=sql_schema, table=table)
         sql.query(f"""
         CREATE TABLE {sql_schema}.{table} (test_col1 int, test_col2 int);
-        INSERT INTO {sql_schema}.{table} VALUES(1, 2);
-        INSERT INTO {sql_schema}.{table} VALUES(3, 4);
+        INSERT INTO {sql_schema}.{table} (test_col1, test_col2) VALUES (1, 2);
+        INSERT INTO {sql_schema}.{table} (test_col1, test_col2) VALUES (3, 4);
         """)
 
         # Sql_to_pg
@@ -624,8 +624,8 @@ class TestPgToPgQry:
         org_pg.drop_table(schema=schema, table=test_pg_to_pg_qry_table)
         org_pg.query(f"""
         CREATE TABLE {schema}.{test_pg_to_pg_qry_table} (test_col1 int, test_col2 int);
-        INSERT INTO {schema}.{test_pg_to_pg_qry_table} VALUES(1, 2);
-        INSERT INTO {schema}.{test_pg_to_pg_qry_table} VALUES(3, 4);
+        INSERT INTO {schema}.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (1, 2);
+        INSERT INTO {schema}.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (3, 4);
         """)
 
         # sql_to_pg_qry
@@ -671,8 +671,8 @@ class TestPgToPgQry:
         org_pg.drop_table(schema='working', table=test_pg_to_pg_qry_table)
         org_pg.query(f"""
         CREATE TABLE working.{test_pg_to_pg_qry_table} (test_col1 int, test_col2 int);
-        INSERT INTO working.{test_pg_to_pg_qry_table} VALUES (1, 2);
-        INSERT INTO working.{test_pg_to_pg_qry_table} VALUES (3, 4);
+        INSERT INTO working.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (1, 2);
+        INSERT INTO working.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (3, 4);
         """)
 
         # sql_to_pg_qry
@@ -719,16 +719,21 @@ class TestPgToPgQry:
 
         # Assert doesn't exist already
         sql.drop_table(schema=sql_schema, table=test_sql_to_pg_qry_table)
-        assert not sql.table_exists(test_sql_to_pg_table)
+        assert not sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
 
-        # Attempt query with no destination table specified
-        qry = f"CREATE TABLE {sql_schema}.{test_sql_to_pg_qry_table}; \
-            INSERT INTO {sql_schema}.{test_sql_to_pg_qry_table} VALUES (1,2,3,4);"
-        data_io.sql_to_pg_qry(sql, pg, query=qry, spatial=False, dest_table=None)
+        # Set up sql source table and assert existence
+        qry = f"CREATE TABLE {sql_schema}.{test_sql_to_pg_qry_table} (TC1 int, TC2 int, TC3 int, TC4 int); \
+            INSERT INTO {sql_schema}.{test_sql_to_pg_qry_table} (TC1, TC2, TC3, TC4) VALUES (1,2,3,4);"
+        sql.query(query=qry)
+        assert sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
 
-        # Assert error
+        # Assert error is raised
+        # TODO: narrow down error type
+        with pytest.raises(Exception):
+            data_io.sql_to_pg_qry(sql, pg, query=qry, spatial=False, dest_table=None)
 
-    def test_sql_to_pg_qry_empty_query_error(self):
+
+    def test_sql_to_pg_qry_empty_query_error(self, sql_schema='dbo'):
         pg = pysqldb.DbConnect(type=config.get('PG_DB','TYPE'),
         server=config.get('PG_DB','SERVER'),
         database=config.get('PG_DB','DB_NAME'),
@@ -751,11 +756,61 @@ class TestPgToPgQry:
         with pytest.raises(Exception):
             data_io.sql_to_pg_qry(sql, pg, query='', spatial=False, dest_table=f'test_sql_to_pg_qry_empty_query_err_{db.user}')
 
-    def test_sql_to_pg_qry_empty_wrong_layer_error(self):
-        return
+    def test_sql_to_pg_qry_empty_wrong_layer_error(self, sql_schema='dbo'):
+        pg = pysqldb.DbConnect(type=config.get('PG_DB','TYPE'),
+        server=config.get('PG_DB','SERVER'),
+        database=config.get('PG_DB','DB_NAME'),
+        user=config.get('PG_DB','DB_USER'),
+        password=config.get('PG_DB','DB_PASSWORD'))
 
-    def test_sql_to_pg_qry_empty_overwrite_error(self):
-        return
+        sql = pysqldb.DbConnect(type=config.get('SQL_DB','TYPE'),
+        server=config.get('SQL_DB','SERVER'),
+        database=config.get('SQL_DB','DB_NAME'),
+        user=config.get('SQL_DB','DB_USER'),
+        password=config.get('SQL_DB','DB_PASSWORD'))
+
+        # Assert doesn't exist already
+        sql.drop_table(schema=sql_schema, table=test_sql_to_pg_qry_table)
+        assert not sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
+
+        # Set up sql source table and assert existence
+        qry = f"CREATE TABLE {sql_schema}.{test_sql_to_pg_qry_table} (TC1 int, TC2 int, TC3 int, TC4 int); \
+            INSERT INTO {sql_schema}.{test_sql_to_pg_qry_table} (TC1, TC2, TC3, TC4) VALUES (1,2,3,4);"
+        sql.query(query=qry)
+        assert sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
+
+        # Assert error is raised
+        # TODO: narrow down error type
+        with pytest.raises(Exception):
+            print("test_sql_to_pg_qry_empty_wrong_layer_error test TBI")
+
+    def test_sql_to_pg_qry_empty_overwrite_error(self, sql_schema='dbo'):
+        pg = pysqldb.DbConnect(type=config.get('PG_DB','TYPE'),
+        server=config.get('PG_DB','SERVER'),
+        database=config.get('PG_DB','DB_NAME'),
+        user=config.get('PG_DB','DB_USER'),
+        password=config.get('PG_DB','DB_PASSWORD'))
+
+        sql = pysqldb.DbConnect(type=config.get('SQL_DB','TYPE'),
+        server=config.get('SQL_DB','SERVER'),
+        database=config.get('SQL_DB','DB_NAME'),
+        user=config.get('SQL_DB','DB_USER'),
+        password=config.get('SQL_DB','DB_PASSWORD'))
+
+        # Assert doesn't exist already
+        sql.drop_table(schema=sql_schema, table=test_sql_to_pg_qry_table)
+        assert not sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
+
+        # Set up sql source table and assert existence
+        qry = f"CREATE TABLE {sql_schema}.{test_sql_to_pg_qry_table} (TC1 int, TC2 int, TC3 int, TC4 int); \
+            INSERT INTO {sql_schema}.{test_sql_to_pg_qry_table} (TC1, TC2, TC3, TC4) VALUES (1,2,3,4);"
+        sql.query(query=qry)
+        assert sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
+
+        # Assert error is raised
+        # TODO: narrow down error type
+        with pytest.raises(Exception):
+            print("test_sql_to_pg_qry_empty_overwrite_error test TBI")
 
     # Note: temporary functionality will be tested separately!
     # Still to test: LDAP, print_cmd
