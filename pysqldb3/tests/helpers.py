@@ -2,6 +2,7 @@ import random
 import os
 import pandas as pd
 from .. import shapefile
+from .. import pysqldb3 as psdb3
 import subprocess
 import requests
 import zipfile
@@ -337,3 +338,31 @@ def set_up_xls():
         row = 0
     w.save(xls_file2)
     print(f'File created: {xls_file2}')
+
+def get_pg_dbc_instance(section_prefix=None, temp_tables=True):
+        """
+        Gets a new PostgreSQL DbConnect, reading parameters from config
+        """
+        sec_str = 'PG_DB'
+        if section_prefix is not None:
+            sec_str = f'{section_prefix}_{sec_str}'
+        return psdb3.DbConnect(type='PG',
+                    server=config.get(sec_str, 'SERVER'),
+                    database=config.get(sec_str, 'DB_NAME'),
+                    user=config.get(sec_str, 'DB_USER'),
+                    password=config.get(sec_str, 'DB_PASSWORD'),
+                    allow_temp_tables=temp_tables)
+
+def get_ms_dbc_instance(section_prefix=None, temp_tables=True):
+        """
+        Gets a new MS SQL Server DbConnect, reading parameters from config
+        """
+        sec_str = 'MS_DB'
+        if section_prefix is not None:
+            sec_str = f'{section_prefix}_{sec_str}'
+        return psdb3.DbConnect(type='PG',
+                    server=config.get(sec_str, 'SERVER'),
+                    database=config.get(sec_str, 'DB_NAME'),
+                    user=config.get(sec_str, 'DB_USER'),
+                    password=config.get(sec_str, 'DB_PASSWORD'),
+                    allow_temp_tables=temp_tables)
