@@ -361,10 +361,10 @@ def get_ms_dbc_instance(section_prefix=None, temp_tables=True):
         """
         config = ConfigParser()
         config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
-        sec_str = 'MS_DB'
+        sec_str = 'SQL_DB'
         if section_prefix is not None:
             sec_str = f'{section_prefix}_{sec_str}'
-        return psdb3.DbConnect(type='PG',
+        return psdb3.DbConnect(type='MS',
                     server=config.get(sec_str, 'SERVER'),
                     database=config.get(sec_str, 'DB_NAME'),
                     user=config.get(sec_str, 'DB_USER'),
