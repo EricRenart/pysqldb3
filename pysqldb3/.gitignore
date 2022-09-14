@@ -137,4 +137,6 @@ notes.txt
 config.cfg
 tests/db_config.cfg
 Test.ipynb
-Open Notebook.onetoc2
+
+# OneNote keeps creating these files on the work pc
+*.onetoc2
