@@ -66,8 +66,8 @@ def read_shapefile_pg(shp_path=None, tbl_name=None, schema='working', srid=2263,
     
     # Construct neccessary command
     ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -nlt PROMOTE_TO_MULTI -overwrite
-        -a_srs 'EPSG:{srid}' -progress -f PostgreSQL 'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} 
-        password={dbpass}"' {shp_path} -nln {schema}.{tbl_name}"""
+        -a_srs 'EPSG:{srid}' -progress -f "PostgreSQL" PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} 
+        password={dbpass}" {shp_path} -nln {schema}.{tbl_name}""".replace('\n','')
 
     # Execute command
     logging.info('Executing the following OGR command:')
@@ -112,8 +112,9 @@ def read_shapefile_ms(shp_path=None, tbl_name=None, schema='dbo', srid=2263, cap
 
     # Construct neccessary command
     ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -nlt PROMOTE_TO_MULTI
-        -overwrite -a_srs "EPSG:{srid}" -progress -f MSSQLSpatial
-        'MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}"' {shp_path} -nln {schema}.{tbl_name}"""
+        -overwrite -a_srs "EPSG:{srid}" -progress -f
+        "MSSQLSpatial" MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}"' 
+        {shp_path} -nln {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
     logging.info(ogr_command)
 
@@ -125,7 +126,7 @@ def read_shapefile_ms(shp_path=None, tbl_name=None, schema='dbo', srid=2263, cap
     
 
 def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263, schema='working', capture_output=False):
-    # type: (str, str, str, int, bool) -> Optional(str)
+    # type: (str, str, str, int, str, bool) -> Optional(str)
     """
     Write out an ESRI Shapefile using data from the PostgreSQL database.
     :param shp_name: Filename of the shapefile to be created.
@@ -150,7 +151,7 @@ def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263
     # Construct neccesary command
     ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -f 'ESRI Shapefile'
         {export_path}\{shp_name} -a_srs "EPSG:{srid}" 'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser}
-        password={dbpass}"' -sql {schema}.{tbl_name}"""
+        password={dbpass}"' -sql {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
     logging.info(ogr_command)
 
@@ -159,8 +160,8 @@ def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263
     if query_result is not None:
         return query_result
 
-def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263, schema='dbo' capture_output=False):
-    # type: (str, str, str, int, bool) -> Optional(str)
+def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263, schema='dbo', capture_output=False):
+    # type: (str, str, str, int, str, bool) -> Optional(str)
     """
     Write out an ESRI Shapefile using data from the MSSQL database.
     :param shp_name: Filename of the shapefile to be created.
@@ -225,7 +226,7 @@ def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema=
     # construct neccessary command
     ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -nlt PROMOTE_TO_MULTI -overwrite -progress -f 
     "PostgreSQL" PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"
-    {geodatabase}/{fc_name} -nln {schema}.{tbl_name}""".replace('\n','')
+    "{geodatabase}" "{fc_name}" -nln {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
     logging.info(ogr_command)
 
@@ -259,7 +260,7 @@ def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema=
     dbpass = db_config.get('DB_PASSWORD')
 
     ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f "MSSQLSpatial" 
-    MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}"' {geodatabase}/{fc_name}
+    MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}" "{geodatabase}" "{fc_name}" 
     -nln {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
     logging.info(ogr_command)
