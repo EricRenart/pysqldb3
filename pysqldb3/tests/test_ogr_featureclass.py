@@ -3,7 +3,7 @@ from .. import ogr_cmds
 from . import TestHelpers
 
 # Path to test gdb
-gdb_path = "tests\\test_data\\lion\\lion.gdb"
+gdb_path = "\\lion\\lion.gdb"
 
 class TestOGRFeatureclass():
 
@@ -17,7 +17,8 @@ class TestOGRFeatureclass():
     def test_ogr_pg_to_featureclass(self):
         tblname = 'test_ogr_pg_to_featureclass_data_table'
         pg = TestHelpers.get_pg_dbc_instance()
-        ogr_cmds.read_feature_class_pg(fc_name='lion', geodatabase=gdb_path, tbl_name=tblname)
+        gdb_dir = os.path.join(os.path.dirname(os.path.abspath(__file__))) + '\\test_data' + gdb_path
+        ogr_cmds.read_feature_class_pg(fc_name='lion', geodatabase=gdb_dir, tbl_name=tblname)
         assert pg.table_exists(tblname)
         
         # cleanup
@@ -26,7 +27,8 @@ class TestOGRFeatureclass():
     def test_ogr_ms_to_featureclass(self):
         tblname = 'test_ogr_ms_to_featureclass_data_table'
         ms = TestHelpers.get_ms_dbc_instance()
-        ogr_cmds.read_feature_class_ms(fc_name='lion', geodatabase=gdb_path, tbl_name=tblname)
+        gdb_dir = os.path.join(os.path.dirname(os.path.abspath(__file__))) + '\\test_data' + gdb_path
+        ogr_cmds.read_feature_class_ms(fc_name='lion', geodatabase=gdb_dir, tbl_name=tblname)
         assert ms.table_exists(tblname)
 
         # cleanup
