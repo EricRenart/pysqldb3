@@ -1,9 +1,7 @@
 import random
 import os
 import pandas as pd
-from .. import shapefile
 from .. import pysqldb3 as psdb3
-import subprocess
 import shutil
 import requests
 import zipfile

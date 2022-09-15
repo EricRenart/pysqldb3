@@ -121,12 +121,13 @@ def write_test_config(confi_path=".\tests\db_config.cfg"):
     :params: confi_path - the path to which the config file should be written
     '''
     open_config = False
-    required_lines = {'TYPE': '', 'SERVER': '', 'DB_NAME': '', 'DB_USER': '', 'DB_PASSWORD': ''}
+    required_lines_pg = {'TYPE': '', 'SERVER': '', 'PORT': '', 'DB_NAME': '', 'DB_USER': '', 'DB_PASSWORD': ''}
+    required_lines_ms = {'TYPE': '', 'SERVER': '', 'DB_NAME': '','DB_USER': '', 'DB_PASSWORD': ''}
     required_sections = {
-        'PG_DB': required_lines,
-        'SECOND_PG_DB': required_lines,
-        'SQL_DB': required_lines,
-        'SECOND_SQL_DB': required_lines
+        'PG_DB': required_lines_pg,
+        'SECOND_PG_DB': required_lines_pg,
+        'SQL_DB': required_lines_ms,
+        'SECOND_SQL_DB': required_lines_ms
     }
     existing_sections = read_config(confi_path)
     for required_section in required_sections.keys():
