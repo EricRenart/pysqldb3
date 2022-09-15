@@ -1,9 +1,9 @@
 from osgeo import ogr, gdal
 from typing import List, Optional
 import os
-import Config
+from . import Config
+from . import util
 import subprocess
-import util
 import logging
 
 """
@@ -30,18 +30,19 @@ def _get_geom_name_from_ogr_type(ogr_type):
 """
 Shapefile OGR Commands
 """
-def read_shapefile_pg(shp_path=None, tbl_name=None, schema='public', srid=2263, capture_output=False):
+def read_shapefile_pg(shp_path=None, tbl_name=None, schema='working', srid=2263, capture_output=False):
     # type: (str, str, str, int, bool) -> Optional(str)
     """
     Read in an ESRI shapefile and store its data in the PostgreSQL database.
     :param shp_path: Path to the shapefile to be read
     :param tbl_name: Name of table in database to store shapefile data in
-    :param schema: Database schema to use, default 'public'
+    :param schema: Database schema to use, default 'working'
     :param srid: Spatial reference identifier for coordinate system to use (default 2263)
     :param capture_output: Whether to print out the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
     
     # Check for errors
     if not os.path.isfile(shp_path):
@@ -56,47 +57,46 @@ def read_shapefile_pg(shp_path=None, tbl_name=None, schema='public', srid=2263, 
     geo_name = _get_geom_name_from_ogr_type(geo_type)
 
     # Connect to db
-    db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
-    dbhost = db_config.get('host')
-    dbport = db_config.get('port')
-    dbname = db_config.get('dbname')
-    dbuser = db_config.get('user')
-    dbpass = db_config.get('password')
+    db_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
+    dbhost = db_config.get('SERVER')
+    dbport = db_config.get('PORT')
+    dbname = db_config.get('DB_NAME')
+    dbuser = db_config.get('DB_USER')
+    dbpass = db_config.get('DB_PASSWORD')
     
     # Construct neccessary command
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
-    '-nlt', 'PROMOTE_TO_MULTI', '-overwrite', '-a_srs', f"EPSG:{srid}", '-progress',
-    '-f', 'PostgreSQL', f'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"',
-    {shp_path}, '-nln', f'{schema}.{tbl_name}']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -nlt PROMOTE_TO_MULTI -overwrite
+        -a_srs 'EPSG:{srid}' -progress -f PostgreSQL 'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} 
+        password={dbpass}"' {shp_path} -nln {schema}.{tbl_name}"""
 
     # Execute command
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
 
-    query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output:
         return query_result
 
-
-def read_shapefile_ms(shp_path=None, tbl_name=None, schema='public', srid=2263, capture_output=False):
+def read_shapefile_ms(shp_path=None, tbl_name=None, schema='dbo', srid=2263, capture_output=False):
     # type: (str, str, str, int, bool) -> Optional(str)
     """
     Read in an ESRI shapefile and store its data in the MSSQL database.
     :param shp_path: Path to the shapefile to be read
     :param tbl_name: Name of table in database to store shapefile data in
-    :param schema: Database schema to use, default 'public'
+    :param schema: Database schema to use, default dbo
     :param srid: Spatial reference identifier for coordinate system to use (default 2263)
     :param capture_output: Whether to print out the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
 
     # Connect to db
-    db_config = Config.read_config('tests/db_config.cfg').get('MS_DB')
-    dbhost = db_config.get('host')
-    dbname = db_config.get('dbname')
-    dbuser = db_config.get('user')
-    dbpass = db_config.get('password')
+    db_config = Config.read_config('tests\\db_config.cfg').get('MS_DB')
+    dbhost = db_config.get('SERVER')
+    dbname = db_config.get('DB_NAME')
+    dbuser = db_config.get('DB_USER')
+    dbpass = db_config.get('DB_PASSWORD')
 
     # Check for errors
     if not os.path.isfile(shp_path):
@@ -111,21 +111,20 @@ def read_shapefile_ms(shp_path=None, tbl_name=None, schema='public', srid=2263, 
     geo_name = _get_geom_name_from_ogr_type(geo_type)
 
     # Construct neccessary command
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
-    '-nlt','PROMOTE_TO_MULTI','-overwrite','-a_srs', f'EPSG:{srid}', 
-    '-progress', '-f', 'MSSQLSpatial', f"MSSQL:server={dbhost}; database={dbname}; \
-     UID={dbuser}; PWD={dbpass}", {shp_path}, '-nln', f'{schema}.{tbl_name}']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -nlt PROMOTE_TO_MULTI
+        -overwrite -a_srs "EPSG:{srid}" -progress -f MSSQLSpatial
+        'MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}"' {shp_path} -nln {schema}.{tbl_name}"""
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
 
 
     # execute query
-    query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output:
         return query_result
     
 
-def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263, capture_output=False):
+def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263, schema='working', capture_output=False):
     # type: (str, str, str, int, bool) -> Optional(str)
     """
     Write out an ESRI Shapefile using data from the PostgreSQL database.
@@ -133,35 +132,34 @@ def write_shapefile_pg(shp_name=None, tbl_name=None, export_path=None, srid=2263
     :param tbl_name: Name of the table in origin PostgreSQL db to write a shapefile from.
     :param export_path: Folder path to write out the shapefile to.
     :param srid: Spatial reference identifier for coordinate system to use (default 2263 NAD83/NYLI-ft)
+    :param schema: Schema to use (default working)
     :param capture_output: Whether to print out the results of the SQL query (default False)
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
     
     # Get db login credentials
-    db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
-    dbhost = db_config.get('host')
-    dbport = db_config.get('port')
-    dbname = db_config.get('dbname')
-    dbuser = db_config.get('user')
-    dbpass = db_config.get('password')
+    db_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
+    dbhost = db_config.get('SERVER')
+    dbport = db_config.get('PORT')
+    dbname = db_config.get('DB_NAME')
+    dbuser = db_config.get('DB_USER')
+    dbpass = db_config.get('DB_PASSWORD')
 
     # Construct neccesary command
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
-    '-overwrite', '-f', 'ESRI Shapefile', f'{export_path}\{shp_name}', '-a_srs',
-    f'EPSG:{srid}', f'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"',
-    '-sql', f'{tbl_name}']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -f 'ESRI Shapefile'
+        {export_path}\{shp_name} -a_srs "EPSG:{srid}" 'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser}
+        password={dbpass}"' -sql {schema}.{tbl_name}"""
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
 
     # execute query
-    query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
+    query_result = subprocess.check_output(ogr_command)
     if query_result is not None:
         return query_result
 
-
-
-def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263, capture_output=False):
+def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263, schema='dbo' capture_output=False):
     # type: (str, str, str, int, bool) -> Optional(str)
     """
     Write out an ESRI Shapefile using data from the MSSQL database.
@@ -170,36 +168,37 @@ def write_shapefile_ms(shp_name=None, tbl_name=None, export_path=None, srid=2263
     :param export_path: Folder path to write out the shapefile to.
     :param srid: Spatial reference identifier for coordinate system to use (default 2263 NAD83/NYLI-ft)
     :param capture_output: Whether to print out the results of the SQL query (default False)
+    :param schema: Schema to use (default dbo)
     :return: Path to shapefile on disk
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
 
     # Get db login credentials
-    db_config = Config.read_config('tests/db_config.cfg').get('MS_DB')
-    dbhost = db_config.get('host')
-    dbname = db_config.get('dbname')
-    dbuser = db_config.get('user')
-    dbpass = db_config.get('password')
+    db_config = Config.read_config('tests\\db_config.cfg').get('MS_DB')
+    dbhost = db_config.get('SERVER')
+    dbname = db_config.get('DB_NAME')
+    dbuser = db_config.get('DB_USER')
+    dbpass = db_config.get('DB_PASSWORD')
 
     # Construct neccessary command
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
-    '-overwrite', '-f', 'ESRI Shapefile', f'{export_path}\{shp_name}', '-a_srs',
-    f'EPSG:{srid}', f"MSSQL:server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}",
-    '-sql', f'{tbl_name}']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -a_srs "EPSG:{srid} 
+    -f "ESRI Shapefile" {export_path}\{shp_name} 'MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; 
+    PWD={dbpass}"' -sql {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
 
     # execute query
-    query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output:
         return query_result
 
 """
 Feature Class OGR Commands
 """
 
-def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema='public', srid=2263, capture_output=False):
+def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema='working', srid=2263, capture_output=False):
     # type: (str, str, str, str, int, bool) -> Optional(str)
     """
     Read in a Feature Class to the Postgre database.
@@ -216,29 +215,28 @@ def read_feature_class_pg(fc_name=None, geodatabase=None, tbl_name=None, schema=
     gdal_data = Config.get_gdal_data_path()
 
     # Get db login credentials
-    db_config = Config.read_config('config.cfg').get('PG_DB')
-    dbhost = db_config.get('host')
-    dbport = db_config.get('port')
-    dbname = db_config.get('dbname')
-    dbuser = db_config.get('user')
-    dbpass = db_config.get('password')
+    db_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
+    dbhost = db_config.get('SERVER')
+    dbport = db_config.get('PORT')
+    dbname = db_config.get('DB_NAME')
+    dbuser = db_config.get('DB_USER')
+    dbpass = db_config.get('DB_PASSWORD')
 
     # construct neccessary command
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
-    '-nlt','PROMOTE_TO_MULTI', '-overwrite', '-f', 'ESRI Shapefile', 
-    f'PostgreSQL', f'PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"',
-    {geodatabase}, {fc_name}, '-nln', f'{schema}.{tbl_name}', '-progress']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -nlt PROMOTE_TO_MULTI -overwrite -progress -f 
+    "PostgreSQL" PG:"host={dbhost} port={dbport} dbname={dbname} user={dbuser} password={dbpass}"
+    {geodatabase}/{fc_name} -nln {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
 
     # execute query
-    query_result = subprocess.call(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output:
         return query_result
 
     
 
-def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema='public', srid=2263, capture_output=False):
+def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema='dbo', srid=2263, capture_output=False):
     # type: (str, str, str, str, int, bool) -> Optional(str)
     """
     Read in a Feature Class to the MSSQL database.
@@ -251,34 +249,30 @@ def read_feature_class_ms(fc_name=None, geodatabase=None, tbl_name=None, schema=
     """
     # Make gdal throw exceptions
     gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
 
     # Get db login credentials
-    db_config = Config.read_config('config.cfg').get('PG_DB')
-    dbhost = db_config.get('host')
-    dbport = db_config.get('port')
-    dbname = db_config.get('dbname')
-    dbuser = db_config.get('user')
-    dbpass = db_config.get('password')
+    db_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
+    dbhost = db_config.get('SERVER')
+    dbname = db_config.get('DB_NAME')
+    dbuser = db_config.get('DB_USER')
+    dbpass = db_config.get('DB_PASSWORD')
 
-    # construct neccessary command
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', Config.get_gdal_data_path(),
-    '-overwrite', '-f', 'ESRI Shapefile', f'MSSQLSpatial', 
-    f'"MSSQL:server={dbhost}; port={dbport}; database={dbname}; UID={dbuser}; PWD={dbpass}"',
-    {geodatabase}, {fc_name}, '-nln', f'{schema}.{tbl_name}', '-progress']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f "MSSQLSpatial" 
+    MSSQL:"server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}"' {geodatabase}/{fc_name}
+    -nln {schema}.{tbl_name}""".replace('\n','')
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
-    # execute query
+    logging.info(ogr_command)
 
-    query_result = subprocess.call(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    # execute command
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output:
         return query_result
-
-
 
 """
 DB-DB IO Commands
 """
-def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='public', use_ldap=False, spatial=False, srid=2263, capture_output=False):
+def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='working', ms_schema='dbo', use_ldap=False, spatial=False, srid=2263, capture_output=False):
     # type: (str, str, str, str, bool, bool, int, bool) -> Optional(str)
     """
     Export a table from a PostgreSQL database to a MSSQL Server database.
@@ -296,8 +290,8 @@ def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='
     gdal_data = Config.get_gdal_data_path()
 
     # Get login credentials for databases
-    pg_db_config = Config.read_config('tests/config.cfg').get('PG_DB')
-    ms_db_config = Config.read_config('tests/config.cfg').get('MS_DB')
+    pg_db_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
+    ms_db_config = Config.read_config('tests\\db_config.cfg').get('MS_DB')
 
     ms_dbhost = ms_db_config.get('SERVER')
     ms_dbname = ms_db_config.get('DB_NAME')
@@ -310,26 +304,26 @@ def pgsql_to_mssql(pg_table=None, ms_table=None, pg_schema='public', ms_schema='
     pg_dbuser = pg_db_config.get('DB_USER')
     pg_dbpass = pg_db_config.get('DB_PASSWORD')
 
-    ogr_command = ['ogr2ogr','--config','GDAL_DATA',f'"{gdal_data}"','-overwrite',
-    '-f','MSSQLSpatial',f'"MSSQL:server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}"',
-    f'PG:"host={pg_dbhost} port={pg_dbport} dbname={pg_dbname} user={pg_dbuser} pass={pg_dbpass}"',
-    f"{pg_schema}.{pg_table}", '-lco', 'OVERWRITE=yes', '-nln', f'{ms_schema}.{ms_table}']
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f 
+    "MSSQLSpatial" MSSQL:"server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}" 
+    PG:"host={pg_dbhost} port={pg_dbport} dbname={pg_dbname} user={pg_dbuser} password={pg_dbpass}"
+    {pg_schema}.{pg_table} -lco OVERWRITE=yes -nln {ms_schema}.{ms_table} """
 
     if spatial:
-        ogr_command.append(['-a_srs',f'EPSG:{srid}'])
+        ogr_command += f"-a_srs 'EPSG:{srid}' "
     else:
-        ogr_command.append([' ','-nlt','NONE'])
-
-    ogr_command.append(['-progress', '--config', 'MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO'])
+        ogr_command += "-nlt NONE "
+    ogr_command += "-progress --config MSSQLSPATIAL_USE_GEOM_COLUMNS NO"
+    ogr_command = ogr_command.replace('\n','')
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
     # excecute query
-    query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output:
         return query_result
     
 
-def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='public', use_ldap=False, spatial=False, as_query=True, srid=2263, capture_output=False):
+def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='dbo', pg_schema='working', use_ldap=False, spatial=False, as_query=True, srid=2263, capture_output=False):
     # type: (str, str, str, str, bool, bool, bool, int, bool) -> Optional(str)
     """
     Export a table from a MS SQL Server database to a PostgreSQL database.
@@ -342,13 +336,13 @@ def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='
     :param srid: The SRID number for the CRS to use, default 2263 (NAD83-NYLI-ft)
     :param capture_output: Whether to return the results of the SQL query (default False)
     """
-    # Make gdal throw exceptions
+# Make gdal throw exceptions
     gdal.UseExceptions()
     gdal_data = Config.get_gdal_data_path()
 
     # Get login credentials for databases
-    pg_db_config = Config.read_config('tests/db_config.cfg').get('PG_DB')
-    ms_db_config = Config.read_config('tests/db_config.cfg').get('MS_DB')
+    pg_db_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
+    ms_db_config = Config.read_config('tests\\db_config.cfg').get('MS_DB')
 
     ms_dbhost = ms_db_config.get('SERVER')
     ms_dbname = ms_db_config.get('DB_NAME')
@@ -361,23 +355,26 @@ def mssql_to_pgsql(ms_table=None, pg_table=None, ms_schema='public', pg_schema='
     pg_dbuser = pg_db_config.get('DB_USER')
     pg_dbpass = pg_db_config.get('DB_PASSWORD')
 
-    ogr_command = ['ogr2ogr','--config','GDAL_DATA',f'"{gdal_data}"','-overwrite',
-    '-f','PostgreSQL',f'PG:"host={pg_dbhost} port={pg_dbport} dbname={pg_dbname} user={pg_dbuser} password={pg_dbpass}',
-    '-f', 'MSSQLSpatial',f'"MSSQL:server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}"',
-    f'{ms_schema}.{ms_table}', '-lco', 'OVERWRITE=yes', '-nln', f'{pg_schema}.{pg_table}']
-    if spatial:
-        ogr_command.append([f'EPSG:{srid}'])
-    ogr_command.append(['-progress'])
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f "PostgreSQL" 
+    PG:"host={pg_dbhost} port={pg_dbport} dbname={pg_dbname} user={pg_dbuser} password={pg_dbpass}" 
+    MSSQL:"server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}" 
+    {ms_schema}.{ms_table} -lco OVERWRITE=yes -nln {pg_schema}.{pg_table} """.replace('\n','')
 
-    # excecute query
+    if spatial:
+        ogr_command += f"-a_srs 'EPSG:{srid}' "
+    else:
+        ogr_command += "-nlt NONE "
+    ogr_command += "--config MSSQLSPATIAL_USE_GEOM_COLUMNS NO"
+    ogr_command = ogr_command.replace('\n','')
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
-    query_result = subprocess.check_output(ogr_command, capture_output=capture_output)
-    if query_result is not None:
+    logging.info(ogr_command)
+    # excecute query
+    query_result = subprocess.check_output(ogr_command)
+    if capture_output is not None:
         return query_result
 
 
-def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', dest_schema='public', sql_query=None, spatial=True, srid=2263, capture_output=False):
+def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='working', dest_schema='working', sql_query=None, spatial=True, srid=2263, capture_output=False):
     # type: (str, str, str, str, bool, bool, int, bool) -> Optional(str)
     """
     Export a table from a PostgreSQL database to another PostgreSQL database.
@@ -396,7 +393,7 @@ def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', d
     gdal_data = Config.get_gdal_data_path()
 
     # Get login credentials for db
-    db1_config = Config.read_config('/tests/db_config.cfg').get('PG_DB')
+    db1_config = Config.read_config('tests\\db_config.cfg').get('PG_DB')
     db1_host = db1_config.get('SERVER')
     db1_port = db1_config.get('PORT')
     db1_name = db1_config.get('DB_NAME')
@@ -404,52 +401,51 @@ def pgsql_to_pgsql(source_table=None, dest_table=None, source_schema='public', d
     db1_pass = db1_config.get('DB_PASSWORD')
 
     # destination db
-    db2_config = Config.read_config('/tests/db_config.cfg').get('SECOND_PG_DB')
+    db2_config = Config.read_config('tests\\db_config.cfg').get('SECOND_PG_DB')
     db2_host = db2_config.get('SERVER')
     db2_port = db2_config.get('PORT')
     db2_name = db2_config.get('DB_NAME')
     db2_user = db2_config.get('DB_USER')
     db2_pass = db2_config.get('DB_PASSWORD')
 
-    ogr_command = ['ogr2ogr', '--config', 'GDAL_DATA', {gdal_data}, '-overwrite', '-f',
-    '"PostgreSQL"', f'PG:"host={db2_host} port={db2_port} dbname={db2_name} user={db2_user} password={db2_pass}"',
-    f'PG:"host={db1_host} port={db1_port} dbname={db1_name} user={db1_user} password={db1_pass}"', f'{source_schema}.{source_table}',
-    '-lco', 'OVERWRITE=yes', '-nln', f'{dest_schema}.{dest_table}']
-
+    ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f "PostgreSQL"
+    PG:"host={db1_host} port={db1_port} dbname={db1_name} user={db1_user} password={db1_pass}"
+    PG:"host={db2_host} port={db2_port} dbname={db2_name} user={db2_user} password={db2_pass}"
+    {source_schema}.{source_table} -lco OVERWRITE=yes -nln {dest_schema}.{dest_table} """
     if sql_query is not None:
-        ogr_command.append(['-sql', sql_query])
-
+        ogr_command += f"-sql {sql_query} "
     if spatial:
-        ogr_command.append([f'EPSG:{srid}'])
-    
-    ogr_command.append(['-progress'])
+        ogr_command += f"-a_srs 'EPSG:{srid}'"
+    ogr_command += f"{source_schema}.{source_table}"
+    ogr_command = ogr_command.replace('\n','')
 
     logging.info('Executing the following OGR command:')
-    logging.info(str(ogr_command))
+    logging.info(ogr_command)
+
     # execute command
-    result = subprocess.check_output(ogr_command, capture_output=capture_output)
+    result = subprocess.check_output(ogr_command)
     if result is not None:
         return result
 
 """
 Bulk File Commands
 """
-def pg_bulk_file_to_table(paths, dest_table, schema='public', capture_output=False):
+def pg_bulk_file_to_table(paths, dest_table, schema='working', capture_output=False):
     # type: (List(str), str, str, bool) -> Optional(str)
     """
     Imports bulk data to a PostgreSQL database table.
-    :param paths: List of filepaths to import into table (corresponds to )
+    :param paths: List of filepaths to import into table
     :param dest_table: Name of table to be created in destination database
     :param schema: Database schema to use for import, default 'public'
     :param capture_output: Whether to return the results of the SQL query (default False)
     """
     pass
 
-def ms_bulk_file_to_table(paths, dest_table, schema='public', capture_output=False):
+def ms_bulk_file_to_table(paths, dest_table, schema='dbo', capture_output=False):
     # type: (List(str), str, str, bool) -> Optional(str)
     """
     Imports bulk data to an MS SQL Server database table.
-    :param paths: List of filepaths to import into table (corresponds to )
+    :param paths: List of filepaths to import into table
     :param dest_table: Name of table to be created in destination database
     :param schema: Database schema to use for import, default 'public'
     :param capture_output: Whether to return the results of the SQL query (default False)
