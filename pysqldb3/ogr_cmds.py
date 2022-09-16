@@ -486,9 +486,30 @@ def pg_bulk_file_to_table(paths, dest_table, schema='working', capture_output=Fa
     :param schema: Database schema to use for import, default 'public'
     :param capture_output: Whether to return the results of the SQL query (default False)
     """
+    gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
+    query_result = []
+
+    # Get configs
+    pg_db_config = Config.read_config('tests\\db_config.cfg')
+    pg_dbhost = pg_db_config.get('SERVER')
+    pg_dbport = pg_db_config.get('PORT')
+    pg_dbname = pg_db_config.get('DB_NAME')
+    pg_dbuser = pg_db_config.get('DB_USER')
+    pg_dbpass = pg_db_config.get('DB_PASSWORD')
 
     # Best thing to do here is probably to iterate the list and do ogr2ogr for each file
-    pass
+    for fn in paths:
+        ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f
+        "PostgreSQL" PG:"host={pg_dbhost} port={pg_dbport} dbname={pg_dbname} user={pg_dbuser}
+        password={pg_dbpass}" {fn} -nln {schema}.{dest_table}""".replace('\n','').replace('\t','')
+        logging.info(f'Importing {fn} to pg table {schema}.{dest_table}...')
+    
+        # execute
+        query_result.append(subprocess.check_output(ogr_command))
+
+    if capture_output:
+        return query_result
 
 def ms_bulk_file_to_table(paths, dest_table, schema='dbo', capture_output=False):
     # type: (List(str), str, str, bool) -> Optional(str)
@@ -499,4 +520,25 @@ def ms_bulk_file_to_table(paths, dest_table, schema='dbo', capture_output=False)
     :param schema: Database schema to use for import, default 'public'
     :param capture_output: Whether to return the results of the SQL query (default False)
     """
-    pass
+    gdal.UseExceptions()
+    gdal_data = Config.get_gdal_data_path()
+    query_result = []
+
+    # Get configs
+    ms_db_config = Config.read_config("tests\\db_config.cfg")
+    ms_dbhost = ms_db_config.get('SERVER')
+    ms_dbname = ms_db_config.get('DB_NAME')
+    ms_dbuser = ms_db_config.get('DB_USER')
+    ms_dbpass = ms_db_config.get('DB_PASS')
+
+    for fn in paths:
+        ogr_command = f"""ogr2ogr --config GDAL_DATA {gdal_data} -overwrite -progress -f
+        "MSSQLSpatial" MSSQL:"server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}" 
+        {fn} -nln {schema}.{dest_table}""".replace('\n','').replace('\t','')
+        logging.info(f'Importing {fn} to pg table {schema}.{dest_table}...')
+    
+        # execute
+        query_result.append(subprocess.check_output(ogr_command))
+
+    if capture_output:
+        return query_result

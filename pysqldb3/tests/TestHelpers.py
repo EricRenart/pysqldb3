@@ -57,8 +57,8 @@ def set_up_simple_test_table_sql(sql, table_name, schema='dbo'):
     # Query to create table. No fancy randomness here - just two int columns with placeholder values
     sql.query(f"""
          CREATE TABLE {schema}.{table_name} (test_col1 int, test_col2 int);
-         INSERT INTO {schema}.{table_name} VALUES(1, 2);
-         INSERT INTO {schema}.{table_name} VALUES(3, 4);
+         INSERT INTO {schema}.{table_name} (test_col1, test_col2) VALUES (1, 2);
+         INSERT INTO {schema}.{table_name} (test_col1, test_col2) VALUES (3, 4);
          """)
 
 def clean_up_test_table_sql(sql, schema='dbo'):
@@ -79,8 +79,8 @@ def set_up_simple_test_table_pg(db, table_name, schema='working'):
     # Query to create table. No fancy randomness here - just two int columns with placeholder values
     db.query(f"""
          CREATE TABLE {schema}.{table_name} (test_col1 int, test_col2 int);
-         INSERT INTO {schema}.{table_name} VALUES(1, 2);
-         INSERT INTO {schema}.{table_name} VALUES(3, 4);
+         INSERT INTO {schema}.{table_name} (test_col1, test_col2) VALUES (1, 2);
+         INSERT INTO {schema}.{table_name} (test_col1, test_col2) VALUES (3, 4);
          """)
 
 def clean_up_simple_test_table_pg(db, table_name, schema='working'):
@@ -190,10 +190,8 @@ def set_up_feature_class():
     """
     zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_21d.zip')
     if not os.path.isfile(zip_path):
-
         download_url = r'https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/nyclion_22b.zip' # Updated LION link for 22b
         r = requests.get(download_url)
-
         with open(zip_path, 'wb') as f:
             f.write(r.content)
     gdb = os.path.join(os.path.dirname(zip_path), 'lion/lion.gdb')
