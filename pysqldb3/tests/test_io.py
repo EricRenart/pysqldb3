@@ -274,7 +274,7 @@ class TestSqlToPgQry:
         assert not db.table_exists(table=table_name)
         assert not db.table_exists(table=spatial_table_name)
 
-        # Run some incorrect queries?
+        # Run some queries (non-spatial and spatial)
         data_io.sql_to_pg_qry(sql, db, query="SELECT TOP 10 CAST(geometry::Point([X_COORD], [Y_COORD], 2236) AS varchar) AS geom FROM WC_ACCIDENT_F_v2",
                             table_name=spatial_table_name)
     
