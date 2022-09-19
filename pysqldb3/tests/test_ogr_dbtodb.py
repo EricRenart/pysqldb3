@@ -1,9 +1,11 @@
 import os
+import pytest
 from .. import ogr_cmds
 from . import TestHelpers
 
 class TestOGRDBtoDB():
 
+    @pytest.mark.ogr
     def test_ogr_pg_to_ms(self):
 
         # connect to dbs
@@ -30,7 +32,7 @@ class TestOGRDBtoDB():
         # assert new table existence in ms
         assert ms.table_exists(test_tbl_name)
 
-    
+    @pytest.mark.ogr
     def test_ogr_pg_to_ms_spatial(self):
         # connect to dbs
         pg = TestHelpers.get_pg_dbc_instance()

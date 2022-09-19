@@ -112,9 +112,9 @@ def read_shapefile_ms(shp_path=None, tbl_name=None, schema='dbo', srid=2263, cap
     geo_name = _get_geom_name_from_ogr_type(geo_type)
 
     # Construct neccessary command
-    ogr_command = ["ogr2ogr","--config","GDAL_DATA","{gdal_data}","-nlt","PROMOTE_TO_MULTI",
+    ogr_command = ["ogr2ogr","--config","GDAL_DATA",f"{gdal_data}","-nlt","PROMOTE_TO_MULTI",
         "-overwrite","-a_srs",f"EPSG:{srid}","-progress","-f",
-        f"MSSQLSpatial","MSSQL:'server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}'",
+        f"MSSQLSpatial",f"MSSQL:'server={dbhost}; database={dbname}; UID={dbuser}; PWD={dbpass}'",
         f"{shp_path}","-nln",f"{schema}.{tbl_name}"]
     logging.info('Executing the following OGR command:')
     logging.info(ogr_command)
@@ -429,6 +429,7 @@ spatial=True, srid=2263, capture_output=False):
 
 def mssql_to_mssql(source_table=None, dest_table=None, source_schema='dbo', dest_schema='dbo', sql_query=None,
 spatial=True, srid=2263, capture_output=False):
+# type: (str, str, str, str, str, bool, int, bool) -> Optional(str)
     """
     Export a table from an MS SQL Server database to another MS SQL Server database.
     :param source_table: The name of the source table to export.
@@ -532,7 +533,7 @@ def ms_bulk_file_to_table(paths, dest_table, schema='dbo', capture_output=False)
     ms_dbpass = ms_db_config.get('DB_PASS')
 
     for fn in paths:
-        ogr_command = p["ogr2ogr","--config","GDAL_DATA",f"{gdal_data}","-overwrite","-progress","-f",
+        ogr_command = ["ogr2ogr","--config","GDAL_DATA",f"{gdal_data}","-overwrite","-progress","-f",
         "MSSQLSpatial",f"MSSQL:'server={ms_dbhost}; database={ms_dbname}; UID={ms_dbuser}; PWD={ms_dbpass}'",
         f"{fn}","-nln",f"{schema}.{dest_table}"]
         logging.info(f'Importing {fn} to pg table {schema}.{dest_table}...')

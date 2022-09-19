@@ -33,7 +33,6 @@ class TestFeatureClassToTablePg:
     def setup_class(cls):
         TestHelpers.set_up_feature_class()
 
-    @pytest.mark.order1
     def test_import_fc_basic(self):
         db.drop_table(table=table, schema=db.default_schema)
         assert not db.table_exists(table, schema=db.default_schema)
@@ -43,7 +42,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(db.default_schema, table)
 
-    @pytest.mark.order2
     def test_import_fc_new_name(self):
         db.drop_table(table=table, schema=db.default_schema)
         assert not db.table_exists(table, schema=db.default_schema)
@@ -53,7 +51,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(db.default_schema, table)
 
-    @pytest.mark.order3
     def test_import_fc_new_name_schema(self):
         schema = 'working'
 
@@ -69,7 +66,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(schema, table)
 
-    @pytest.mark.order4
     def test_import_fc_new_name_schema_srid(self):
         schema = 'working'
 
@@ -84,7 +80,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(schema, table)
 
-    @pytest.mark.order5
     def test_import_fc_new_name_data_check(self):
         db.drop_table(table=table, schema=db.default_schema)
         assert not db.table_exists(table, schema=db.default_schema)
@@ -140,7 +135,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(db.default_schema, table)
 
-    @pytest.mark.order6
     def test_import_fc_new_name_schema_no_fc(self):
         schema = 'working'
 
@@ -154,7 +148,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(schema, table)
 
-    @pytest.mark.order7
     def test_import_fc_new_name_schema_private(self):
         private_table = table + '_priv'
         schema = 'working'
@@ -174,7 +167,6 @@ class TestFeatureClassToTablePg:
 
         db.drop_table(schema, private_table)
 
-    @pytest.mark.order8
     def test_import_fc_new_name_schema_tmp(self):
         not_temp_table = table + '_tmp'
         schema = 'working'
@@ -201,7 +193,9 @@ class TestFeatureClassToTableMs:
     def setup_class(cls):
         TestHelpers.set_up_feature_class()
 
-    @pytest.mark.order9
+    # MSSQL-FC tests take too long, so making them skippable
+
+    @pytest.mark.slow
     def test_import_fc_basic(self):
         sql.drop_table(table=table, schema=sql.default_schema)
         assert not sql.table_exists(table, schema=sql.default_schema)
@@ -211,7 +205,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(sql.default_schema, table)
 
-    @pytest.mark.order10
+    @pytest.mark.slow
     def test_import_fc_new_name(self):
         sql.drop_table(table=table, schema=sql.default_schema)
         assert not sql.table_exists(table, schema=sql.default_schema)
@@ -221,7 +215,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(sql.default_schema, table)
 
-    @pytest.mark.order11
+    @pytest.mark.slow
     def test_import_fc_new_name_schema(self):
         schema = 'dbo'
 
@@ -233,7 +227,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(schema, table)
 
-    @pytest.mark.order12
+    @pytest.mark.slow
     def test_import_fc_new_name_schema_srid(self):
         schema = 'dbo'
 
@@ -248,7 +242,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(schema, table)
 
-    @pytest.mark.order13
+    @pytest.mark.slow
     def test_import_fc_new_name_data_check(self):
         sql.drop_table(table=table, schema=sql.default_schema)
 
@@ -300,7 +294,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(sql.default_schema, table)
 
-    @pytest.mark.order14
+    @pytest.mark.slow
     def test_import_fc_new_name_schema_no_fc(self):
         fc = 'test_feature_class_no_table'
         schema = 'working'
@@ -315,7 +309,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(schema, table)
 
-    @pytest.mark.order15
+    @pytest.mark.slow
     def test_import_fc_new_name_schema_temp(self):
         schema = 'dbo'
 
@@ -332,7 +326,7 @@ class TestFeatureClassToTableMs:
 
         sql.drop_table(schema, table)
 
-    @pytest.mark.order16
+    @pytest.mark.slow
     def test_import_fc_new_name_schema_private(self):
         schema = 'dbo'
 

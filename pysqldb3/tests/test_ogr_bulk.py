@@ -1,4 +1,5 @@
 import os
+import pytest
 import pandas as pd
 from .. import ogr_cmds
 from . import TestHelpers
@@ -12,6 +13,7 @@ os.path.abspath(bulk_data_path+'test3.csv'), os.path.abspath(bulk_data_path+'tes
 
 class TestOGRBulkData():
 
+    @pytest.mark.ogr
     def test_ogr_bulk_to_pg(self):
         pg = TestHelpers.get_pg_dbc_instance()
         pg.connect()
@@ -28,6 +30,7 @@ class TestOGRBulkData():
         assert pg.table_exists(tbl_name)
         assert len(pg.dfquery(f"SELECT TABLE {tbl_name}")) == 20
 
+    @pytest.mark.ogr
     def test_ogr_bulk_to_ms(self):
         ms = TestHelpers.get_ms_dbc_instance()
         ms.connect()

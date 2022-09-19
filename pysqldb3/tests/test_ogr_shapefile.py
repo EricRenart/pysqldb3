@@ -1,4 +1,5 @@
 import os
+import pytest
 from configparser import ConfigParser
 from . import TestHelpers
 from .. import ogr_cmds
@@ -17,6 +18,7 @@ class TestOGRShapefile():
             TestHelpers.clean_up_shapefile()
         TestHelpers.set_up_shapefile()
     
+    @pytest.mark.ogr
     def test_ogr_shapefile_read_to_pg(self):
         pg = TestHelpers.get_pg_dbc_instance()
         table_name = 'test_ogr_shp_to_pg_table'
@@ -28,6 +30,7 @@ class TestOGRShapefile():
         TestHelpers.clean_up_shapefile()
         pg.drop_table(schema='working', table=table_name)
 
+    @pytest.mark.ogr
     def test_ogr_shapefile_write_pg_to_shp(self):
         table_name = 'test_ogr_pg_to_shp_table'
         shp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__))) + '\\test_data' + shp_path
@@ -37,6 +40,7 @@ class TestOGRShapefile():
         # clean up
         TestHelpers.clean_up_shapefile()
 
+    @pytest.mark.ogr
     def test_ogr_shapefile_read_to_ms(self):
         ms = TestHelpers.get_ms_dbc_instance()
         table_name = 'test_ogr_shp_to_ms_table'
@@ -48,6 +52,7 @@ class TestOGRShapefile():
         TestHelpers.clean_up_shapefile()
         ms.drop_table(schema='dbo', table=table_name)
 
+    @pytest.mark.ogr
     def test_ogr_shapefile_write_ms_to_shp(self):
         table_name = 'test_ogr_ms_to_shp_table'
         shp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__))) + '\\test_data' + shp_path
