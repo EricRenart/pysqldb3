@@ -1,4 +1,5 @@
 import os
+import pytest
 from .. import ogr_cmds
 from . import TestHelpers
 
@@ -14,6 +15,7 @@ class TestOGRFeatureclass():
             TestHelpers.clean_up_feature_class()
         TestHelpers.set_up_feature_class()
 
+    @pytest.mark.ogr
     def test_ogr_pg_to_featureclass(self):
         tblname = 'test_ogr_pg_to_featureclass_data_table'
         pg = TestHelpers.get_pg_dbc_instance()
@@ -24,6 +26,7 @@ class TestOGRFeatureclass():
         # cleanup
         pg.drop_table(table=tblname)
 
+    @pytest.mark.ogr
     def test_ogr_ms_to_featureclass(self):
         tblname = 'test_ogr_ms_to_featureclass_data_table'
         ms = TestHelpers.get_ms_dbc_instance()
