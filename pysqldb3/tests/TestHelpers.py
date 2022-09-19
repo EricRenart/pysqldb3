@@ -1,5 +1,6 @@
 import random
 import os
+import subprocess
 import pandas as pd
 from .. import pysqldb3 as psdb3
 import shutil
@@ -246,19 +247,21 @@ def set_up_shapefile():
 
     pth = os.path.dirname(os.path.abspath(__file__)) + "\\test_data\\"
 
-    cmd = f'''ogr2ogr -f "ESRI Shapefile" {pth}test.shp -dialect sqlite -sql 
-    "SELECT gid, GeomFromText(WKT, 4326), some_value FROM sample" {fle}'''
-    os.system(cmd.replace('\n', ' '))
+    subprocess.call(['ogr2ogr','-f','ESRI Shapefile',f'{pth}test.shp','-dialect','sqlite','-sql',
+    f"SELECT (gid, GeomFromText(WKT,4326), some_value) FROM sample",{fle}])
     print ('Sample shapefile ready...')
 
 
-def clean_up_shapefile():
+def clean_up_shapefile(filename='test'):
+    """
+    Deletes the shapefile the test suite downloads during testing.
+    :param filename: The filename of the shapefile to delete, including extension
+    """
+    print('Deleting any existing shp')
     fldr = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-    shp = "test.shp"
     for ext in ('shp', 'dbf', 'shx'):
-        os.remove(f'{fldr}\\test_data\\test.{ext}')
-
-    print ('Deleting any existing shp')
+        os.remove(f'{fldr}\\test_data\\{filename}.{ext}')
+    
     # Delete_management(os.path.join(fldr, shp))
 
 
@@ -366,3 +369,23 @@ def get_ms_dbc_instance(section_prefix=None, temp_tables=True):
                     user=config.get(sec_str, 'DB_USER'),
                     password=config.get(sec_str, 'DB_PASSWORD'),
                     allow_temp_tables=temp_tables)
+
+def clean_up_ogr_test_tables_pg(pg, schema='working'):
+    """
+    Cleans up all test tables in the PG database for ogr tests.
+    """
+    
+    pg.query(f"DROP TABLE {schema}.test_ogr_pg_to_featureclass_data_table_{pg.user}")
+    pg.query(f"DROP TABLE {schema}.test_ogr_shp_to_pg_table_{pg.user}")
+    pg.query(f"DROP TABLE {schema}.test_ogr_pg_to_shp_table_{pg.user}")
+    pg.query(f"DROP TABLE {schema}.test_ogr_mssql_to_pg_{pg.user}")
+
+def clean_up_ogr_test_tables_ms(ms, schema='dbo'):
+    """
+    Cleans up all test tables in the MS database for ogr tests.
+    """
+
+    ms.query(f"DROP TABLE {schema}.test_ogr_ms_to_featureclass_data_table_{ms.user}")
+    ms.query(f"DROP TABLE {schema}.test_ogr_shp_to_ms_table_{ms.user}")
+    ms.query(f"DROP TABLE {schema}.test_ogr_ms_to_shp_table_{ms.user}")
+    ms.query(f"DROP TABLE {schema}.test_ogr_mssql_to_mssql_{ms.user}")
