@@ -203,10 +203,10 @@ def set_up_feature_class():
 
 
 def clean_up_feature_class():
-    zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_21d.zip')
-    fldr = os.path.dirname(zip_path)+'/lion/lion.gdb'
+    zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_22b.zip')
+    gdb_path = os.path.dirname(zip_path)+'/lion/lion.gdb'
     print ('Deleting any existing gdb')
-    shutil.rmtree(fldr)
+    shutil.rmtree(gdb_path)
 
 # def set_up_fc_and_shapefile():
 #     """
@@ -255,7 +255,7 @@ def set_up_shapefile():
 def clean_up_shapefile(filename='test'):
     """
     Deletes the shapefile the test suite downloads during testing.
-    :param filename: The filename of the shapefile to delete, including extension
+    :param filename: The filename of the shapefile to delete (not including extension)
     """
     print('Deleting any existing shp')
     fldr = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -295,12 +295,10 @@ def clean_up_shp(file_path):
     for ext in ('.shp', '.dbf', '.shx', '.prj'):
         clean_up_file(file_path.replace('.shp', ext))
 
-
 def clean_up_file(file_path):
     if os.path.isfile(file_path):
         os.remove(file_path)
         print(f"File removed: {os.path.basename(file_path)}")
-
 
 def set_up_xls():
     xls_file1 = os.path.join(DIR, 'test_xls.xls')

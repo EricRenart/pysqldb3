@@ -7,10 +7,14 @@ class TestOGRFeatureclass():
 
     @classmethod
     def setup(cls):
-        if os.path.exists(os.path.dirname(os.path.abspath(__file__)), 'lion.gdb'):
-            # Delete fc if it exists
-            TestHelpers.clean_up_feature_class()
-        TestHelpers.set_up_feature_class()
+        gdb_exists = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__), 'lion/lion.gdb')))
+        if gdb_exists:
+            # Delete and re-download lion.gdb
+            TestHelpers.clean_up_feature_class()      
+    
+    @classmethod
+    def teardown(cls):
+        TestHelpers.clean_up_feature_class()
 
     @pytest.mark.ogr
     def test_ogr_pg_to_featureclass(self):

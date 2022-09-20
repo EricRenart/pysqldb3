@@ -4,19 +4,19 @@ from configparser import ConfigParser
 from . import TestHelpers
 from .. import ogr_cmds
 
-shp_path = "test_data\\test.shp"
-shp_path_pg = "test_data\\test_pg.shp"
-shp_path_ms = "test_data\\test_ms.shp"
+shp_path = "test_data/test.shp"
+shp_path_pg = "test_data/test_pg.shp"
+shp_path_ms = "test_data/test_ms.shp"
 
 class TestOGRShapefile():
 
     @classmethod
     def setup(cls):
-        cls.cleanup_test_shapefiles()
-    
+        pass
+        
     @classmethod
     def teardown(cls):
-        pass
+        cls.cleanup_test_shapefiles()
     
     def cleanup_test_shapefiles(self):
         # Delete shapefiles if they exist
