@@ -313,12 +313,13 @@ spatial=False, srid=2263, capture_output=False):
     "OVERWRITE=yes","-nln",f"{ms_schema}.{ms_table}"]
 
     if spatial:
-        ogr_command += f"-a_srs 'EPSG:{srid}' "
+        ogr_command += ["-a_srs",f"EPSG:{srid}"]
     else:
-        ogr_command += "-nlt NONE "
+        ogr_command += ["-nlt","NONE"]
     ogr_command = ogr_command.replace('\n','').replace('\t','')
     logging.info('Executing the following OGR command:')
     logging.info(ogr_command)
+
     # excecute query
     query_result = subprocess.check_output(ogr_command)
     if capture_output:
@@ -364,7 +365,7 @@ spatial=False, as_query=True, srid=2263, capture_output=False):
     "-nln",f"{pg_schema}.{pg_table}"]
 
     if spatial:
-        ogr_command.append(['-a_srs',"EPSG:{srid}"])
+        ogr_command.append(['-a_srs',f"EPSG:{srid}"])
     else:
         ogr_command.append(['-nlt','NONE'])
     logging.info('Executing the following OGR command:')
@@ -415,7 +416,7 @@ spatial=True, srid=2263, capture_output=False):
     f"PG:host={db2_host} port={db2_port} dbname={db2_name} user={db2_user} password={db2_pass}",
     f"{source_schema}.{source_table}","-lco","OVERWRITE=yes","-nln",f"{dest_schema}.{dest_table}"]
     if sql_query is not None:
-        ogr_command.append(["-sql",f"{sql_query}"])
+        ogr_command.append(["-sql",sql_query])
     if spatial:
         ogr_command.append(["-a_srs",f"EPSG:{srid}"])
     
@@ -433,7 +434,7 @@ spatial=True, srid=2263, capture_output=False):
     """
     Export a table from an MS SQL Server database to another MS SQL Server database.
     :param source_table: The name of the source table to export.
-    :param dest_table: Name of the table to be created in the destination  database.
+    :param dest_table: Name of the table to be created in the destination database.
     :param source_schema: Schema of the source table (default 'dbo')
     :param dest_schema: Schema of the destination table (default 'dbo')
     :param sql_query: SQL Query to run on source db
@@ -467,7 +468,7 @@ spatial=True, srid=2263, capture_output=False):
     f"{source_schema}.{source_table}","-lco","OVERWRITE=yes","-nln",f"{dest_schema}.{dest_table}"]
     
     if spatial:
-        ogr_command += f'-a_srs "EPSG:{srid}"'
+        ogr_command.append(["-a_srs",f"EPSG:{srid}"])
     
     # execute command
     result = subprocess.check_output(ogr_command)
@@ -481,7 +482,7 @@ Bulk File Commands
 def pg_bulk_file_to_table(paths, dest_table, schema='working', capture_output=False):
     # type: (List(str), str, str, bool) -> Optional(str)
     """
-    Imports bulk data to a PostgreSQL database table.
+    Imports bulk CSV files to a PostgreSQL database table.
     :param paths: List of filepaths to import into table
     :param dest_table: Name of table to be created in destination database
     :param schema: Database schema to use for import, default 'public'
@@ -515,7 +516,7 @@ def pg_bulk_file_to_table(paths, dest_table, schema='working', capture_output=Fa
 def ms_bulk_file_to_table(paths, dest_table, schema='dbo', capture_output=False):
     # type: (List(str), str, str, bool) -> Optional(str)
     """
-    Imports bulk data to an MS SQL Server database table.
+    Imports bulk CSV files to an MS SQL Server database table.
     :param paths: List of filepaths to import into table
     :param dest_table: Name of table to be created in destination database
     :param schema: Database schema to use for import, default 'public'
