@@ -4,12 +4,9 @@ import pandas as pd
 from .. import ogr_cmds
 from . import TestHelpers
 
-# Path to bulk test data
-bulk_data_path = os.path.dirname(os.path.abspath(__file__)) + "\\test_data\\bulk\\"
-
 # Required CSV files in tests/test_data/bulk/ for testing
-reqd_files = [os.path.abspath(bulk_data_path+'test1.csv'), os.path.abspath(bulk_data_path+'test2.csv'), 
-os.path.abspath(bulk_data_path+'test3.csv'), os.path.abspath(bulk_data_path+'test4.csv')]
+reqd_files = [TestHelpers.test_data_folder_path('bulk/bulk1.csv'), TestHelpers.test_data_folder_path('bulk/bulk2.csv'),
+TestHelpers.test_data_folder_path('bulk/bulk3.csv'), TestHelpers.test_data_folder_path('bulk/bulk4.csv')]
 
 class TestOGRBulkData():
 
@@ -19,8 +16,7 @@ class TestOGRBulkData():
         pg.connect()
 
         # assert correct csvs in dir
-        filenames = os.listdir(bulk_data_path)
-        #assert filenames.__eq__(reqd_files)
+        assert os.listdir(TestHelpers.test_data_folder_path('bulk')) == reqd_files
 
         # read in csvs
         tbl_name = f"ogr_pg_bulk_file_to_table_{pg.user}"
@@ -29,6 +25,9 @@ class TestOGRBulkData():
         # Assert data in table
         assert pg.table_exists(tbl_name)
         assert len(pg.dfquery(f"SELECT TABLE {tbl_name}")) == 20
+
+        # Cleanup
+        TestHelpers.drop_all_tables_pg()
 
     @pytest.mark.ogr
     def test_ogr_bulk_to_ms(self):
@@ -46,3 +45,6 @@ class TestOGRBulkData():
         # Assert data in table
         assert ms.table_exists(tbl_name)
         assert len(ms.dfquery(f"SELECT TABLE {tbl_name}")) == 20
+
+        # Cleanup
+        TestHelpers.drop_all_tables_ms()

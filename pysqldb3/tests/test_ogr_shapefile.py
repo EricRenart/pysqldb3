@@ -13,10 +13,6 @@ class TestOGRShapefile():
     @classmethod
     def setup(cls):
         pass
-        
-    @classmethod
-    def teardown(cls):
-        cls.cleanup_test_shapefiles()
     
     def cleanup_test_shapefiles(self):
         # Delete shapefiles if they exist
@@ -37,8 +33,7 @@ class TestOGRShapefile():
         assert len(pg.get_table_columns(table=table_name)) > 1
 
         # clean up
-        TestHelpers.clean_up_shapefile()
-        pg.drop_table(schema='working', table=table_name)
+        TestHelpers.drop_all_tables_pg()
 
     @pytest.mark.ogr
     def test_ogr_shapefile_write_pg_to_shp(self):
@@ -49,8 +44,7 @@ class TestOGRShapefile():
         assert os.path.exists(shp_path_pg)
         
         # clean up
-        TestHelpers.clean_up_shapefile()
-        pg.drop_table(schema='working', table=table_name)
+        TestHelpers.drop_all_tables_pg()
 
     @pytest.mark.ogr
     def test_ogr_shapefile_read_to_ms(self):
@@ -61,8 +55,7 @@ class TestOGRShapefile():
         assert len(ms.get_table_columns(table=table_name)) > 1
 
         # clean up
-        TestHelpers.clean_up_shapefile()
-        ms.drop_table(schema='dbo', table=table_name)
+        TestHelpers.drop_all_tables_ms()
 
     @pytest.mark.ogr
     def test_ogr_shapefile_write_ms_to_shp(self):
@@ -73,5 +66,4 @@ class TestOGRShapefile():
         assert os.path.exists(shp_path_ms)
 
         # Clean up
-        TestHelpers.clean_up_shapefile()
-        ms.drop_table(schema='dbo', table=table_name)
+        TestHelpers.drop_all_tables_ms()

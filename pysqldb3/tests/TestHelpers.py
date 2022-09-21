@@ -201,12 +201,24 @@ def set_up_feature_class():
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(os.path.dirname(zip_path))
 
+def set_up_small_feature_class():
+    """
+    Selects a subset of LION corresponding to the Bayside neighborhood of Queens, and saves it as a new feature in lion.gdb using ogr.
+    """
+    pass
+
 
 def clean_up_feature_class():
     zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_22b.zip')
     gdb_path = os.path.dirname(zip_path)+'/lion/lion.gdb'
     print ('Deleting any existing gdb')
     shutil.rmtree(gdb_path)
+
+def clean_up_small_feature_class():
+    """
+    Deletes lion_bayside FC in lion.gdb
+    """
+    pass
 
 # def set_up_fc_and_shapefile():
 #     """
@@ -235,6 +247,33 @@ def clean_up_feature_class():
 #     print 'Deleted ESRI sample files'
 #
 #
+
+def test_folder_path(pathstr=None):
+    # type: (str) -> str
+    """
+    Gets absolute path of specified file in test folder.
+    Raises FileNotFoundError if path doesn't exist.
+    """
+    if pathstr is None:
+        return os.path.dirname(os.path.abspath(__file__))
+    else:
+        fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), pathstr)
+        if not os.path.exists(fp):
+            raise FileNotFoundError(f'File {pathstr} not found in tests directory. Please check for its existence.')
+        return fp
+
+def test_data_folder_path(pathstr=None):
+    # type: (str) -> str
+    """
+    Gets absolute path of specified file in test data folder (tests/test_data).
+    If no argument is specified, returns absolute path of test data folder
+    Raises FileNotFoundError if path doesn't exist.
+    """
+    if pathstr is None:
+        return test_folder_path('test_data')
+    else:
+        return test_folder_path(f"test_data/{pathstr}")
+
 def set_up_shapefile():
     data = {
         'gid': {0: 1, 1: 2},
@@ -242,10 +281,9 @@ def set_up_shapefile():
         'some_value': {0: 'test1', 1: 'test2'}
     }
     df = pd.DataFrame(data)
-    df.to_csv(os.path.dirname(os.path.abspath(__file__)) + "\\test_data\\sample.csv", index=False)
-    fle = os.path.dirname(os.path.abspath(__file__)) + "\\test_data\\sample.csv"
-
-    pth = os.path.dirname(os.path.abspath(__file__)) + "\\test_data\\"
+    fle = test_data_folder_path('sample.csv')
+    df.to_csv(fle, index=False)
+    pth = test_data_folder_path()
 
     subprocess.call(['ogr2ogr','-f','ESRI Shapefile',f'{pth}test.shp','-dialect','sqlite','-sql',
     f"SELECT (gid, GeomFromText(WKT,4326), some_value) FROM sample",{fle}])
@@ -368,22 +406,34 @@ def get_ms_dbc_instance(section_prefix=None, temp_tables=True):
                     password=config.get(sec_str, 'DB_PASSWORD'),
                     allow_temp_tables=temp_tables)
 
-def clean_up_ogr_test_tables_pg(pg, schema='working'):
+def drop_all_tables_ms(ms, schema='dbo'):
     """
-    Cleans up all test tables in the PG database for ogr tests.
+    Drops all tables in an MSSQL database in the given schema.
+    Source: mssqltips.com/sqlservertip/6798/drop-all-tables-sql-server
     """
-    
-    pg.query(f"DROP TABLE {schema}.test_ogr_pg_to_featureclass_data_table_{pg.user}")
-    pg.query(f"DROP TABLE {schema}.test_ogr_shp_to_pg_table_{pg.user}")
-    pg.query(f"DROP TABLE {schema}.test_ogr_pg_to_shp_table_{pg.user}")
-    pg.query(f"DROP TABLE {schema}.test_ogr_mssql_to_pg_{pg.user}")
+    query = f"""USE [{schema}.{ms.dbname}]
+    GO;
+    SELECT 'ALTER TABLE'
+        + OBJECT_SCHEMA_NAME(parent_object_id)
+        + '.'
+        + QUOTENAME(OBJECT_NAME(parent_object_id))
+        + ' '
+        + 'DROP CONSTRAINT'
+        + QUOTENAME(name)
+    FROM sys.foreign_keys
+    ORDER BY OBJECT_SCHEMA_NAME(parent_object_id), OBJECT_NAME(parent_object_id);
+    GO;
+    """
+    ms.query(query)
 
-def clean_up_ogr_test_tables_ms(ms, schema='dbo'):
+def drop_all_tables_pg(pg, schema='working'):
     """
-    Cleans up all test tables in the MS database for ogr tests.
+    Drops all tables in a postgresql database
+    Source: http://stackoverflow.com/questions/3327312/ddg#13823560
     """
-
-    ms.query(f"DROP TABLE {schema}.test_ogr_ms_to_featureclass_data_table_{ms.user}")
-    ms.query(f"DROP TABLE {schema}.test_ogr_shp_to_ms_table_{ms.user}")
-    ms.query(f"DROP TABLE {schema}.test_ogr_ms_to_shp_table_{ms.user}")
-    ms.query(f"DROP TABLE {schema}.test_ogr_mssql_to_mssql_{ms.user}")
+    query = f""" DROP SCHEMA {schema} CASCADE;
+    CREATE SCHEMA {schema};
+    GRANT ALL ON SCHEMA {schema} TO postgres;
+    GRANT ALL ON SCHEMA {schema} TO {schema};
+    """
+    pg.query(query)

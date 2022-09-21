@@ -83,6 +83,10 @@ class TestOGRDBtoDB():
 
         # assert new table existance in pg
         assert pg.table_exists(test_tbl_name)
+
+        # cleanup
+        TestHelpers.drop_all_tables_ms()
+        TestHelpers.drop_all_tables_pg()
     
     def test_ogr_ms_to_pg_spatial(self):
         # connect to dbs
@@ -109,6 +113,10 @@ class TestOGRDBtoDB():
         # assert new table existance in pg
         assert pg.table_exists(test_tbl_name)
 
+        # cleanup
+        TestHelpers.drop_all_tables_ms()
+        TestHelpers.drop_all_tables_pg()
+
     def test_ogr_pg_to_pg(self):
         # connect to dbs
         pg1 = TestHelpers.get_pg_dbc_instance()
@@ -127,6 +135,9 @@ class TestOGRDBtoDB():
         # perform OGR command
         ogr_cmds.pgsql_to_pgsql(source_table=test_tbl_name, dest_table=test_tbl_name, spatial=False)
         assert pg2.table_exists(test_tbl_name)
+
+        # cleanup
+        TestHelpers.drop_all_tables_pg()
 
     def test_ogr_ms_to_ms(self):
         # connect to dbs
@@ -147,6 +158,9 @@ class TestOGRDBtoDB():
         ogr_cmds.mssql_to_mssql(source_table=test_tbl_name, dest_table=test_tbl_name, spatial=False)
         assert ms2.table_exists(test_tbl_name)
 
+        # cleanup
+        TestHelpers.drop_all_tables_ms()
+
     def test_ogr_ms_to_ms_spatial(self):
         # connect to dbs
         ms1 = TestHelpers.get_ms_dbc_instance()
@@ -165,3 +179,6 @@ class TestOGRDBtoDB():
         # perform OGR command
         ogr_cmds.mssql_to_mssql(source_table=test_tbl_name, dest_table=test_tbl_name, spatial=True)
         assert ms2.table_exists(test_tbl_name)
+
+        # cleanup
+        TestHelpers.drop_all_tables_ms()
