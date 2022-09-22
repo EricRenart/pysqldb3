@@ -5,8 +5,7 @@ from .. import ogr_cmds
 from . import TestHelpers
 
 # Required CSV files in tests/test_data/bulk/ for testing
-reqd_files = [TestHelpers.test_data_folder_path('bulk/bulk1.csv'), TestHelpers.test_data_folder_path('bulk/bulk2.csv'),
-TestHelpers.test_data_folder_path('bulk/bulk3.csv'), TestHelpers.test_data_folder_path('bulk/bulk4.csv')]
+reqd_files = ['bulk1.csv','bulk2.csv','bulk3.csv','bulk4.csv']
 
 class TestOGRBulkData():
 
@@ -20,7 +19,7 @@ class TestOGRBulkData():
 
         # read in csvs
         tbl_name = f"ogr_pg_bulk_file_to_table_{pg.user}"
-        ogr_cmds.pg_bulk_file_to_table(filenames, dest_table=tbl_name)
+        ogr_cmds.pg_bulk_file_to_table(reqd_files, dest_table=tbl_name)
 
         # Assert data in table
         assert pg.table_exists(tbl_name)
@@ -35,8 +34,7 @@ class TestOGRBulkData():
         ms.connect()
 
         # assert correct csvs in dir
-        filenames = os.listdir(bulk_data_path)
-        #assert filenames.__eq__(reqd_files)
+        filenames = os.listdir()
 
         # read in csvs
         tbl_name = f"ogr_ms_bulk_file_to_table_{ms.user}"

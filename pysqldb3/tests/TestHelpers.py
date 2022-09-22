@@ -5,7 +5,9 @@ import pandas as pd
 from .. import pysqldb3 as psdb3
 import shutil
 import requests
+import logging
 import zipfile
+from .. import Config
 from configparser import ConfigParser
 from xlrd import open_workbook
 from xlutils.copy import copy
@@ -189,7 +191,7 @@ def set_up_feature_class():
     Builds file gdb with a feature class with sample data
     :return:
     """
-    zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_21d.zip')
+    zip_path = test_data_folder_path('nyclion_22b.zip')
     if not os.path.isfile(zip_path):
         download_url = r'https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/nyclion_22b.zip' # Updated LION link for 22b
         r = requests.get(download_url)
@@ -204,13 +206,20 @@ def set_up_feature_class():
 def set_up_small_feature_class():
     """
     Selects a subset of LION corresponding to the Bayside neighborhood of Queens, and saves it as a new feature in lion.gdb using ogr.
+    This is to speed up testing with the mssql database
     """
-    pass
-
+    if not os.path.exists(test_data_folder_path('lion/lion.gdb')):
+        logging.info('Lion.gdb does not exist in tests/test_data, retrieving it now.')
+        set_up_feature_class()
+    ogr_cmd = ['ogr2ogr','-config','GDAL_DATA',Config.get_gdal_data_path(),'-f','OpenFileGDB',
+    test_data_folder_path('lion/lion.gdb'),test_data_folder_path('lion/lion.gdb'),'lion','-a_srs',
+    'EPSG:2263','-sql','SELECT FROM lion WHERE "LZip" == "11361" OR "LZip" == "11364"','-nln','lion_bayside','-progress']
+    subprocess.call(ogr_cmd)
+    logging.info("Successfully saved new fc named 'lion_bayside' in lion.gdb")
 
 def clean_up_feature_class():
-    zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data/nyclion_22b.zip')
-    gdb_path = os.path.dirname(zip_path)+'/lion/lion.gdb'
+    zip_path = test_data_folder_path('nyclion_22b.zip')
+    gdb_path = test_data_folder_path('lion/lion.gdb')
     print ('Deleting any existing gdb')
     shutil.rmtree(gdb_path)
 
@@ -283,9 +292,9 @@ def set_up_shapefile():
     df = pd.DataFrame(data)
     fle = test_data_folder_path('sample.csv')
     df.to_csv(fle, index=False)
-    pth = test_data_folder_path()
+    pth = test_data_folder_path('test.shp')
 
-    subprocess.call(['ogr2ogr','-f','ESRI Shapefile',f'{pth}test.shp','-dialect','sqlite','-sql',
+    subprocess.call(['ogr2ogr','-f','ESRI Shapefile',pth,'-dialect','sqlite','-sql',
     f"SELECT (gid, GeomFromText(WKT,4326), some_value) FROM sample",{fle}])
     print ('Sample shapefile ready...')
 
