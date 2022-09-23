@@ -113,7 +113,7 @@ def get_unique_table_schema_string(tbl_str, db_type):
 def get_query_table_schema_name(tbl_str, db_type):
     """
     The inverse of get_unique_table_schema_string. This takes a cleaned input from the log table and makes small
-    changes to ensure MS/PG interpret it correctly.
+    changes to ensure MS/PG interprets it correctly.
 
     Ex. in PG: if stored in log as Table, then must be queried as "Table" to ensure capital letter.
     Ex. in MS: if stored in log as "table", then must be queried as ["table"] to ensure quotes.
@@ -352,3 +352,13 @@ def parse_shp_path(path=None, shp_name=None):
         shp_name = shp
 
     return path, shp_name
+
+def output_path(fname=None):
+    """
+    Gets path to the specified file in the output folder on the local machine.
+    :param fname: The filename to get the absolute path for. If None, returns the location of the output folder.
+    """
+    if fname is None:
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)))
+    else:
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), f'output/{fname}')
