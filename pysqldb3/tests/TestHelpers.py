@@ -281,7 +281,7 @@ def test_data_folder_path(pathstr=None):
     if pathstr is None:
         return test_folder_path('test_data')
     else:
-        return test_folder_path(f"test_data/{pathstr}")
+        return os.path.join(test_folder_path('test_data'), pathstr)
 
 def set_up_shapefile():
     data = {

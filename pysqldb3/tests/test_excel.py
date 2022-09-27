@@ -1,11 +1,9 @@
 from os import path
-
-from tests.TestHelpers import test_data_folder_path
 from ..excel import DbConnectExcel
+from . import TestHelpers
 import pytest
 import pandas as pd
 import numpy as np
-import TestHelpers
 import openpyxl as opxl
 
 class TestExcel():
@@ -13,7 +11,7 @@ class TestExcel():
     def test_df_to_excel(self):
         # Create dataframe with random ints and save it
         excel_path = TestHelpers.test_data_folder_path('testexcelsingle.xlsx')
-        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df')
+        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
         DbConnectExcel.df_to_excel(test_df,filename='testexcelsingle')
 
         # Assert existance and xlsx format
@@ -29,8 +27,8 @@ class TestExcel():
     def test_df_to_excel_xls(self):
         # Create dataframe with random ints and save it
         excel_path = TestHelpers.test_data_folder_path('testexcelsingle.xls')
-        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df')
-        DbConnectExcel.df_to_excel(test_df,filename='testexcelsingle',as_xls=True)
+        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
+        DbConnectExcel.df_to_excel(test_df, filename='testexcelsingle', as_xls=True)
 
         # Assert existance and xls format
         assert path.exists(excel_path)
@@ -42,10 +40,11 @@ class TestExcel():
         # Assert dfs are equal
         assert test_df_2.equals(test_df)
     
-    def test_df_to_excel_custom_tab_name():
+    def test_df_to_excel_custom_tab_name(self):
         # Create dataframe with random ints and save it
         excel_path = TestHelpers.test_data_folder_path('testexcelsinglenamedtab.xlsx')
-        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df')
+        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
+        DbConnectExcel.df_to_excel(test_df, filename='testexcelsingle', tab_name='customtabname')
 
         # Assert existance
         assert path.exists(excel_path)
@@ -60,12 +59,12 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testexcelmulti.xlsx')
 
         # Create random dfs
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df3')
+        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
+        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
+        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
 
         # Save
-        DbConnectExcel.df_to_excel([test_df1,test_df2,test_df3],filename='testexcelmulti')
+        DbConnectExcel.df_to_excel([test_df1,test_df2,test_df3], filename='testexcelmulti')
 
         # Assert existence
         assert path.exists(excel_path)
@@ -75,34 +74,13 @@ class TestExcel():
         assert wb.sheetnames == ['pdb3_test_df1','pdb3_test_df2','pdb3_test_df3']
         wb.close()
 
-    def test_df_to_excel_multiple_tabs_custom_names(self):
-        excel_path = TestHelpers.test_data_folder_path('testexcelmultinamedtabs.xlsx')
-        tab_names = ['tab1','tab2','tab3']
-
-        # Create random dfs
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df3')
-
-        # Save
-        DbConnectExcel.df_to_excel_multi(df_list=[test_df1,test_df2,test_df3],filename='testexcelmultinamedtabs',
-        tab_name_list=tab_names)
-
-        # Assert existence
-        assert path.exists(excel_path)
-
-        # Assert proper tabs
-        wb = opxl.load_workbook(excel_path, read_only=True)
-        assert wb.sheetnames == tab_names
-        wb.close()
-        
     def test_df_to_excel_multiple_tabs_diff_df_and_name_lengths(self):
         excel_path = TestHelpers.test_data_folder_path('testexcelmultinamedtabs.xlsx')
 
         # Create random dfs
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)), name='pdb3_test_df3')
+        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
+        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
+        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(5,5)))
 
         # Try to save but assert ValueError
         with pytest.raises(ValueError):
@@ -114,7 +92,7 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testpgtoexcel.xlsx')
 
         # create random df
-        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df1')
+        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
 
         # Insert into DB
         pg.connect()
@@ -135,9 +113,9 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testpgtoexcelmulti.xlsx')
         
         # Create random dfs
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df3')
+        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
 
         # Insert into DB
         pg.connect()
@@ -161,9 +139,9 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testpgtoexcelmultinamed.xlsx')
         
         # Create random dfs
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df3')
+        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
         table_names = [f'pg_to_xlsx_1_{pg.user}',f'pg_to_xlsx_2_{pg.user}',f'pg_to_xlsx_3_{pg.user}']
 
         # Insert into DB
@@ -189,7 +167,7 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testmstoexcel.xlsx')
         
         # create random df
-        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_pg_xlsx_df1')
+        test_df = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
 
         # Insert into DB
         ms.connect()
@@ -209,9 +187,9 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testmstoexcelmulti.xlsx')
         
         # create random df's
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_ms_xlsx_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_ms_xlsx_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_ms_xlsx_df3')
+        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
         
         # insert into DB
         ms.connect()
@@ -233,9 +211,9 @@ class TestExcel():
         excel_path = TestHelpers.test_data_folder_path('testmstoexcelmultinamed.xlsx')
         
         # create random df's
-        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_ms_xlsx_df1')
-        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_ms_xlsx_df2')
-        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)), name='pdb3_test_ms_xlsx_df3')
+        test_df1 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df2 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
+        test_df3 = pd.DataFrame(np.random.random_integers(low=0,high=999999,size=(10,10)))
 
         # insert into DB
         ms.connect()

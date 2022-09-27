@@ -1,7 +1,7 @@
 import openpyxl as opxl
 import pandas as pd
 import os
-import util
+from . import util
 from . import Config
 from . import pysqldb3 as pdb3
 
