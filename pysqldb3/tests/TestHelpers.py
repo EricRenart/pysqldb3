@@ -14,7 +14,8 @@ from xlutils.copy import copy
 
 
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__))) + '\\test_data'
-
+pg_test_schema = 'testing'
+ms_test_schema = 'testing'
 
 def set_up_test_csv():
     data = {'id': {0: 1, 1: 2, 2: 3, 3: 4, 4: 5},
@@ -305,9 +306,9 @@ def clean_up_shapefile(filename='test'):
     :param filename: The filename of the shapefile to delete (not including extension)
     """
     print('Deleting any existing shp')
-    fldr = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+    fldr = test_data_folder_path()
     for ext in ('shp', 'dbf', 'shx'):
-        os.remove(f'{fldr}\\test_data\\{filename}.{ext}')
+        os.remove(f'{fldr}\\{filename}.{ext}')
     
     # Delete_management(os.path.join(fldr, shp))
 

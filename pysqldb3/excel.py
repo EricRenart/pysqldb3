@@ -95,7 +95,7 @@ class DbConnectExcel:
             file_with_ext = f"{file_with_ext}x"
         
         # Save
-        df.to_excel(file_with_ext, sheet_name=df.Name)
+        df.to_excel(file_with_ext, sheet_name=tab_name)
     
     def df_to_excel_multi(self, df_list, filename, tab_name_list=None, as_xls=False):
         """
@@ -108,10 +108,16 @@ class DbConnectExcel:
         """
         if not as_xls:
             filename = f"{filename}x"
-        if len(df_list) != len(tab_name_list) and tab_name_list != None:
-            raise ValueError('Length of list of dataframes and list of tab names must be equal')
+        if tab_name_list == None:
+            # use default tab names - Sheet1, Sheet2 etc
+            for df, i in enumerate(tab_name_list):
+                tab_name_list[i] = f'Sheet{i}'
+        else:
+            if len(df_list) != len(tab_name_list):
+                raise ValueError('Length of list of dataframes and list of tab names must be equal')
         
-        # Save
-        with pd.ExcelWriter(util.output_path(filename), if_sheet_exists='replace') as writer:
-            for i, df in enumerate(df_list):
-                df.to_excel(writer, sheet_name=tab_name_list[i])
+            # Save
+            with pd.ExcelWriter(util.output_path(filename), if_sheet_exists='replace') as writer:
+                for i, df in enumerate(df_list):
+                    df.to_excel(writer, sheet_name=tab_name_list[i])
+        
