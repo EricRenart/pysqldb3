@@ -496,18 +496,18 @@ class TestSqlToPg:
         db.drop_table(schema=dest_schema_name, table=table)
         sql.drop_table(schema=sql_schema, table=table)
 
-     def test_sql_to_pg_org_schema_name(self, dest_schema_name='testing'):
+     def test_sql_to_pg_org_schema_name(self, orig_schema_name='testing'):
         # TODO: test with non-DBO table
         ms = TestHelpers.get_sql_dbc_instance(connect=True)
         pg = TestHelpers.get_pg_dbc_instance(connect=True)
-        table = f'test_sql_to_pg_orig_schema_name_{ms.user}'
+        table = f'test_sql_to_pg_orig_schema_name_{orig_schema_name}_{ms.user}'
 
         # Assert table doesn't exist in MSSQL
         sql.drop_table(schema='dbo', table=table)
         assert not sql.table_exists(schema='dbo', table=table)
 
         # test
-        data_io.sql_to_pg(ms, pg, org_table=table, org_schema='dbo', dest_schema=dest_schema_name)
+        data_io.sql_to_pg(ms, pg, org_table=table, org_schema=orig_schema_name, dest_schema='public')
         assert pg.table_exists(table)
 
      def test_sql_to_pg_schema_name_non_dbo(self, orig_schema_name='testing', dest_schema_name='testing'):
@@ -528,7 +528,7 @@ class TestSqlToPg:
         # TODO: when adding spatial features like SRID via a_srs, test spatial
         ms.drop_table(schema=orig_schema_name, table=table)
 
-        # set up a spatialtable in SQL
+        # set up a spatialtable in SQL3
         ms = TestHelpers.get_sql_dbc_instance(connect=True)
         pg = TestHelpers.get_pg_dbc_instance(connect=True)
         table = f'test_sql_to_pg_spatial_{ms.user}'
@@ -538,7 +538,7 @@ class TestSqlToPg:
         data_io.sql_to_pg(ms, pg, org_table=table, org_schema=orig_schema_name, dest_table=table, 
         dest_schema_name=dest_schema_name, spatial=True)
         assert pg.table_exists(table)
-        # assert spatiality?
+        # TODO: assert spatiality
 
      def test_sql_to_pg_wrong_layer_error(self):
          return
@@ -560,7 +560,7 @@ class TestPgToPg:
     def setup_class(cls):
         TestHelpers.set_up_test_table_pg(db)
 
-    def test_pg_to_pg_basic_table(self):
+    def test_pg_to_pg_basic_table(self, orig_schema='testing', dest_schema='testing'):
         # Must have RIS DB info in db_config.cfg [SECOND_PG_DB] section
         ris = pysqldb.DbConnect(type=config.get('SECOND_PG_DB', 'TYPE'),
                                 server=config.get('SECOND_PG_DB', 'SERVER'),
@@ -568,28 +568,28 @@ class TestPgToPg:
                                 user=config.get('SECOND_PG_DB', 'DB_USER'),
                                 password=config.get('SECOND_PG_DB', 'DB_PASSWORD'))
 
-        db.drop_table(schema='working', table=test_pg_to_pg_tbl)
-        ris.drop_table(schema='working', table=test_pg_to_pg_tbl)
+        db.drop_table(schema=orig_schema, table=test_pg_to_pg_tbl)
+        ris.drop_table(schema=orig_schema, table=test_pg_to_pg_tbl)
 
         # Create table
         db.query(f"""
-            CREATE TABLE working.{test_pg_to_pg_tbl} AS
+            CREATE TABLE {orig_schema}.{test_pg_to_pg_tbl} AS
             SELECT * 
-            FROM working.{pg_table_name} 
+            FROM {orig_schema}.{pg_table_name} 
             LIMIT 10 
         """)
 
         # Assert tables don't already exist in destination
-        assert db.table_exists(schema='working', table=test_pg_to_pg_tbl)
-        assert not ris.table_exists(schema='working', table=test_pg_to_pg_tbl)
+        assert db.table_exists(schema=orig_schema, table=test_pg_to_pg_tbl)
+        assert not ris.table_exists(schema=orig_schema, table=test_pg_to_pg_tbl)
 
         # pg_to_pg
-        data_io.pg_to_pg(db, ris, org_schema='working', org_table=test_pg_to_pg_tbl, dest_schema='working',
+        data_io.pg_to_pg(db, ris, org_schema=orig_schema, org_table=test_pg_to_pg_tbl, dest_schema=dest_schema,
                          print_cmd=True)
 
         # Assert pg_to_pg successful
-        assert db.table_exists(schema='working', table=test_pg_to_pg_tbl)
-        assert ris.table_exists(schema='working', table=test_pg_to_pg_tbl)
+        assert db.table_exists(schema=orig_schema, table=test_pg_to_pg_tbl)
+        assert ris.table_exists(schema=orig_schema, table=test_pg_to_pg_tbl)
 
         # Assert db equality
         risdf = ris.dfquery(f"""
@@ -608,10 +608,10 @@ class TestPgToPg:
                                       check_less_precise=True)
 
         # Cleanup
-        db.drop_table(schema='working', table=test_pg_to_pg_tbl)
-        ris.drop_table(schema='working', table=test_pg_to_pg_tbl)
+        db.drop_table(schema=orig_schema, table=test_pg_to_pg_tbl)
+        ris.drop_table(schema=orig_schema, table=test_pg_to_pg_tbl)
 
-    def test_pg_to_pg_basic_name_table(self):
+    def test_pg_to_pg_basic_name_table(self, schema='testing'):
         # Must have RIS DB info in db_config.cfg [SECOND_PG_DB] section
         ris = pysqldb.DbConnect(type=config.get('SECOND_PG_DB', 'TYPE'),
                                 server=config.get('SECOND_PG_DB', 'SERVER'),
@@ -619,10 +619,10 @@ class TestPgToPg:
                                 user=config.get('SECOND_PG_DB', 'DB_USER'),
                                 password=config.get('SECOND_PG_DB', 'DB_PASSWORD'))
 
-        db.drop_table(schema='working', table=test_pg_to_pg_tbl)
+        db.drop_table(schema=schema, table=test_pg_to_pg_tbl)
 
         test_pg_to_pg_tbl_other = test_pg_to_pg_tbl + '_another_name'
-        ris.drop_table(schema='working', table=test_pg_to_pg_tbl_other)
+        ris.drop_table(schema=schema, table=test_pg_to_pg_tbl_other)
 
         # Create table for testing in ris
         db.query(f"""
@@ -633,26 +633,26 @@ class TestPgToPg:
         """)
 
         # Assert final table doesn't already exist
-        assert not ris.table_exists(schema='working', table=test_pg_to_pg_tbl_other)
-        assert db.table_exists(schema='working', table=test_pg_to_pg_tbl)
+        assert not ris.table_exists(schema=schema, table=test_pg_to_pg_tbl_other)
+        assert db.table_exists(schema=schema, table=test_pg_to_pg_tbl)
 
         # pg_to_pg
-        data_io.pg_to_pg(db, ris, org_schema='working', org_table=test_pg_to_pg_tbl,
-                         dest_schema='working', dest_table=test_pg_to_pg_tbl_other, print_cmd=True)
+        data_io.pg_to_pg(db, ris, org_schema=schema, org_table=test_pg_to_pg_tbl,
+                         dest_schema=schema, dest_table=test_pg_to_pg_tbl_other, print_cmd=True)
 
         # Assert pg_to_pg was successful
-        assert db.table_exists(schema='working', table=test_pg_to_pg_tbl)
-        assert ris.table_exists(schema='working', table=test_pg_to_pg_tbl_other)
+        assert db.table_exists(schema=schema, table=test_pg_to_pg_tbl)
+        assert ris.table_exists(schema=schema, table=test_pg_to_pg_tbl_other)
 
         # Assert db equality
         risdf = ris.dfquery(f"""
             SELECT * 
-            FROM working.{test_pg_to_pg_tbl_other}
+            FROM {schema}.{test_pg_to_pg_tbl_other}
         """).infer_objects()
 
         dbdf = db.dfquery(f"""
             SELECT * 
-            FROM working.{test_pg_to_pg_tbl}
+            FROM {schema}.{test_pg_to_pg_tbl}
         """).infer_objects()
 
         # Assert
@@ -661,8 +661,8 @@ class TestPgToPg:
                                       check_less_precise=True)
 
         # Cleanup
-        ris.drop_table(schema='working', table=test_pg_to_pg_tbl_other)
-        db.drop_table(schema='working', table=test_pg_to_pg_tbl)
+        ris.drop_table(schema=schema, table=test_pg_to_pg_tbl_other)
+        db.drop_table(schema=schema, table=test_pg_to_pg_tbl)
 
         # Note: temporary functionality will be tested separately!
         # Still to test: LDAP, print_cmd
@@ -675,7 +675,7 @@ class TestPgToPg:
 
 
 class TestPgToPgQry:
-    def test_pg_to_pg_qry_basic_table(self, schema='public'):
+    def test_pg_to_pg_qry_basic_table(self, schema='testing'):
         org_pg = pysqldb.DbConnect(type=config.get('SECOND_PG_DB', 'TYPE'),
                                 server=config.get('SECOND_PG_DB', 'SERVER'),
                                 database=config.get('SECOND_PG_DB', 'DB_NAME'),
@@ -722,7 +722,7 @@ class TestPgToPgQry:
         db.drop_table(schema=db.default_schema, table=test_pg_to_pg_qry_table)
         org_pg.drop_table(schema=schema, table=test_pg_to_pg_qry_table)
 
-    def test_pg_to_pg_qry_dest_schema(self, schema=''):
+    def test_pg_to_pg_qry_dest_schema(self, orig_schema='testing', dest_schema='testing2'):
         org_pg = pysqldb.DbConnect(type=config.get('SECOND_PG_DB', 'TYPE'),
                                    server=config.get('SECOND_PG_DB', 'SERVER'),
                                    database=config.get('SECOND_PG_DB', 'DB_NAME'),
@@ -730,33 +730,33 @@ class TestPgToPgQry:
                                    password=config.get('SECOND_PG_DB', 'DB_PASSWORD'))
 
         # Assert doesn't exist already
-        db.drop_table(schema='working', table=test_pg_to_pg_qry_table)
-        assert not db.table_exists(schema='working', table=test_pg_to_pg_qry_table)
+        db.drop_table(schema=orig_schema, table=test_pg_to_pg_qry_table)
+        assert not db.table_exists(schema=orig_schema, table=test_pg_to_pg_qry_table)
 
         # Add test_table
-        org_pg.drop_table(schema='working', table=test_pg_to_pg_qry_table)
+        org_pg.drop_table(schema=orig_schema, table=test_pg_to_pg_qry_table)
         org_pg.query(f"""
-        CREATE TABLE working.{test_pg_to_pg_qry_table} (test_col1 int, test_col2 int);
-        INSERT INTO working.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (1, 2);
-        INSERT INTO working.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (3, 4);
+        CREATE TABLE {orig_schema}.{test_pg_to_pg_qry_table} (test_col1 int, test_col2 int);
+        INSERT INTO {orig_schema}.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (1, 2);
+        INSERT INTO {orig_schema}.{test_pg_to_pg_qry_table} (test_col1, test_col2) VALUES (3, 4);
         """)
 
         # sql_to_pg_qry
-        data_io.pg_to_pg_qry(org_pg, db, query=f"SELECT * FROM working.{test_pg_to_pg_qry_table}",
-                              dest_table=test_pg_to_pg_qry_table, dest_schema='working', print_cmd=True)
+        data_io.pg_to_pg_qry(org_pg, db, query=f"SELECT * FROM {orig_schema}.{test_pg_to_pg_qry_table}",
+                              dest_table=test_pg_to_pg_qry_table, dest_schema=dest_schema, print_cmd=True)
 
         # Assert sql_to_pg_qry successful and correct length
-        assert db.table_exists(schema='working', table=test_pg_to_pg_qry_table)
-        assert len(db.dfquery(f'SELECT * FROM working.{test_pg_to_pg_qry_table}')) == 2
+        assert db.table_exists(schema=dest_schema, table=test_pg_to_pg_qry_table)
+        assert len(db.dfquery(f'SELECT * FROM {dest_schema}.{test_pg_to_pg_qry_table}')) == 2
 
         # Assert df equality
         org_pg_df = org_pg.dfquery(f"""
-        SELECT * FROM working.{test_pg_to_pg_qry_table}
+        SELECT * FROM {orig_schema}.{test_pg_to_pg_qry_table}
         ORDER BY test_col1
         """).infer_objects().replace('\s+', '', regex=True)
 
         pg_df = db.dfquery(f"""
-        SELECT * FROM working.{test_pg_to_pg_qry_table}
+        SELECT * FROM {dest_schema}.{test_pg_to_pg_qry_table}
         ORDER BY test_col1
         """).infer_objects().replace('\s+', '', regex=True)
 
@@ -767,8 +767,8 @@ class TestPgToPgQry:
                                       check_dtype=False)
 
         # Cleanup
-        db.drop_table(schema='working', table=test_pg_to_pg_qry_table)
-        sql.drop_table(schema='dbo', table=test_pg_to_pg_qry_table)
+        db.drop_table(schema=orig_schema, table=test_pg_to_pg_qry_table)
+        sql.drop_table(schema=dest_schema, table=test_pg_to_pg_qry_table)
 
     def test_sql_to_pg_qry_no_dest_table_input(self, sql_schema='dbo'):
         pg = pysqldb.DbConnect(type=config.get('PG_DB','TYPE'),
@@ -813,7 +813,7 @@ class TestPgToPgQry:
         password=config.get('SQL_DB','DB_PASSWORD'))
 
         # Assert doesn't exist already
-        sql.drop_table(schema='dbo', table=test_sql_to_pg_qry_table)
+        sql.drop_table(schema=sql_schema, table=test_sql_to_pg_qry_table)
         assert not sql.table_exists(test_sql_to_pg_qry_table)
 
         # Attempt to throw empty query error
@@ -840,8 +840,8 @@ class TestPgToPgQry:
         assert not sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
 
         # Set up sql source table and assert existence
-        qry = f"CREATE TABLE {sql_schema}.{test_sql_to_pg_qry_table} (TC1 int, TC2 int, TC3 int, TC4 int); \
-            INSERT INTO {sql_schema}.{test_sql_to_pg_qry_table} (TC1, TC2, TC3, TC4) VALUES (1,2,3,4);"
+        qry = f"""CREATE TABLE {sql_schema}.{test_sql_to_pg_qry_table} (TC1 int, TC2 int, TC3 int, TC4 int);
+            INSERT INTO {sql_schema}.{test_sql_to_pg_qry_table} (TC1, TC2, TC3, TC4) VALUES (1,2,3,4);"""
         sql.query(query=qry)
         assert sql.table_exists(test_sql_to_pg_qry_table, schema=sql_schema)
 

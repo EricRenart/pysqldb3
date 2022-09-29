@@ -109,7 +109,7 @@ class DbConnectExcel:
         """
         if not as_xls:
             filename = f"{filename}x"
-        if tab_name_list != None:
+        if tab_name_list == None:
             # use default tab names - Sheet1, Sheet2 etc
             for df, i in enumerate(tab_name_list):
                 tab_name_list[i] = f'Sheet{i}'
