@@ -30,7 +30,7 @@ class TestOGRBulkData():
 
     @pytest.mark.ogr
     def test_ogr_bulk_to_ms(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         ms.connect()
 
         # assert correct csvs in dir

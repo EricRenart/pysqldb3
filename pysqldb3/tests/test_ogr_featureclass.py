@@ -26,7 +26,7 @@ class TestOGRFeatureclass():
 
     @pytest.mark.ogr
     def test_ogr_ms_to_featureclass(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         tblname = f'test_ogr_ms_to_featureclass_data_table_{ms.user}'
         ogr_cmds.read_featureclass_ms(fc_name='lion_bayside', geodatabase=TestHelpers.test_data_folder_path(LION_GDB_PATH), tbl_name=tblname)
         assert ms.table_exists(tblname)

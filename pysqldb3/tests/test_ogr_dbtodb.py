@@ -10,7 +10,7 @@ class TestOGRDBtoDB():
 
         # connect to dbs
         pg = TestHelpers.get_pg_dbc_instance()
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         pg.connect()
         ms.connect()
         test_tbl_name = f"test_ogr_pg_to_mssql_{pg.user}"
@@ -36,7 +36,7 @@ class TestOGRDBtoDB():
     def test_ogr_pg_to_ms_spatial(self):
         # connect to dbs
         pg = TestHelpers.get_pg_dbc_instance()
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         pg.connect()
         ms.connect()
         test_tbl_name = f"test_ogr_pg_to_mssql_spatial_{pg.user}"
@@ -62,7 +62,7 @@ class TestOGRDBtoDB():
     def test_ogr_ms_to_pg(self):
         # connect to dbs
         pg = TestHelpers.get_pg_dbc_instance()
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         pg.connect()
         ms.connect()
         test_tbl_name = f"test_ogr_mssql_to_pg_{ms.user}"
@@ -90,7 +90,7 @@ class TestOGRDBtoDB():
     
     def test_ogr_ms_to_pg_spatial(self):
         # connect to dbs
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         pg = TestHelpers.get_pg_dbc_instance()
         ms.connect()
         pg.connect()
@@ -141,8 +141,8 @@ class TestOGRDBtoDB():
 
     def test_ogr_ms_to_ms(self):
         # connect to dbs
-        ms1 = TestHelpers.get_ms_dbc_instance()
-        ms2 = TestHelpers.get_ms_dbc_instance(section_prefix='SECOND')
+        ms1 = TestHelpers.get_sql_dbc_instance()
+        ms2 = TestHelpers.get_sql_dbc_instance(section_prefix='SECOND')
         ms1.connect()
         ms2.connect()
         test_tbl_name = f"test_ogr_ms_to_ms_{ms1.user}"
@@ -163,8 +163,8 @@ class TestOGRDBtoDB():
 
     def test_ogr_ms_to_ms_spatial(self):
         # connect to dbs
-        ms1 = TestHelpers.get_ms_dbc_instance()
-        ms2 = TestHelpers.get_ms_dbc_instance(section_prefix='SECOND')
+        ms1 = TestHelpers.get_sql_dbc_instance()
+        ms2 = TestHelpers.get_sql_dbc_instance(section_prefix='SECOND')
         ms1.connect()
         ms2.connect()
         test_tbl_name = f"test_ogr_ms_to_ms_spatial_{ms1.user}"

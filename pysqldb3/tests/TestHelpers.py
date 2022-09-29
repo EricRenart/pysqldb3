@@ -36,13 +36,14 @@ def set_up_test_csv():
     df.to_csv(os.path.dirname(os.path.abspath(__file__)) + "\\test_data\\varchar.csv", index=False, header=False)
 
 
-def set_up_test_table_sql(sql, schema='dbo'):
+def set_up_test_table_sql(sql, table_name=None, schema='dbo'):
     """
     Creates one test table for testing
 
     Uses random to make randomly generated inputs.
     """
-    table_name = f'sql_test_table_{sql.user}'
+    if table_name == None:
+        table_name = f'sql_test_table_{sql.user}'
 
     if sql.table_exists(table=table_name, schema=schema):
         return
@@ -91,13 +92,14 @@ def clean_up_simple_test_table_pg(db, table_name, schema='working'):
     # Drop table
     db.drop_table(table=f'{table_name}_{db.user}', schema=schema)
 
-def set_up_test_table_pg(db, schema='working'):
+def set_up_test_table_pg(db, table_name=None, schema='working'):
     """
     Creates one test table for testing
 
     Uses random to make randomly generated inputs.
     """
-    table_name = f'pg_test_table_{db.user}'
+    if table_name == None:
+        table_name = f'pg_test_table_{db.user}'
 
     if db.table_exists(table=table_name, schema=schema):
         return
@@ -384,66 +386,46 @@ def set_up_xls():
     w.save(xls_file2)
     print(f'File created: {xls_file2}')
 
-def get_pg_dbc_instance(section_prefix=None, temp_tables=True):
+def get_pg_dbc_instance(section_prefix=None, temp_tables=True, connect=False):
         """
-        Gets a new PostgreSQL DbConnect, reading parameters from config
+        Gets a new PostgreSQL DbConnect, reading parameters from config.
+        :param section_prefix: Prefix to PG_DB section in tests/db_config.cfg. Default None
+        :param temp_tables: Whether to allow temp tables. Default True
+        :param connect: Whether to connect to dbc instance before returning it. Default False
         """
         config = ConfigParser()
         config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
         sec_str = 'PG_DB'
         if section_prefix is not None:
             sec_str = f'{section_prefix}_{sec_str}'
-        return psdb3.DbConnect(type='PG',
+        pg = psdb3.DbConnect(type='PG',
                     server=config.get(sec_str, 'SERVER'),
                     database=config.get(sec_str, 'DB_NAME'),
                     user=config.get(sec_str, 'DB_USER'),
                     password=config.get(sec_str, 'DB_PASSWORD'),
                     allow_temp_tables=temp_tables)
+        if connect:
+            pg.connect()
+        return pg
 
-def get_ms_dbc_instance(section_prefix=None, temp_tables=True):
+def get_sql_dbc_instance(section_prefix=None, temp_tables=True, connect=False):
         """
-        Gets a new MS SQL Server DbConnect, reading parameters from config
+        Gets a new MS SQL Server DbConnect, reading parameters from config.
+        :param section_prefix: Prefix to SQL_DB section in tests/db_config.cfg. Default None
+        :param temp_tables: Whether to allow temp tables. Default True
+        :param connect: Whether to connect to dbc instance before returning it. Default False
         """
         config = ConfigParser()
         config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
         sec_str = 'SQL_DB'
         if section_prefix is not None:
             sec_str = f'{section_prefix}_{sec_str}'
-        return psdb3.DbConnect(type='MS',
+        sql = psdb3.DbConnect(type='MS',
                     server=config.get(sec_str, 'SERVER'),
                     database=config.get(sec_str, 'DB_NAME'),
                     user=config.get(sec_str, 'DB_USER'),
                     password=config.get(sec_str, 'DB_PASSWORD'),
                     allow_temp_tables=temp_tables)
-
-def drop_all_tables_ms(ms, schema='dbo'):
-    """
-    Drops all tables in an MSSQL database in the given schema.
-    Source: mssqltips.com/sqlservertip/6798/drop-all-tables-sql-server
-    """
-    query = f"""USE [{schema}.{ms.dbname}]
-    GO;
-    SELECT 'ALTER TABLE'
-        + OBJECT_SCHEMA_NAME(parent_object_id)
-        + '.'
-        + QUOTENAME(OBJECT_NAME(parent_object_id))
-        + ' '
-        + 'DROP CONSTRAINT'
-        + QUOTENAME(name)
-    FROM sys.foreign_keys
-    ORDER BY OBJECT_SCHEMA_NAME(parent_object_id), OBJECT_NAME(parent_object_id);
-    GO;
-    """
-    ms.query(query)
-
-def drop_all_tables_pg(pg, schema='working'):
-    """
-    Drops all tables in a postgresql database
-    Source: http://stackoverflow.com/questions/3327312/ddg#13823560
-    """
-    query = f""" DROP SCHEMA {schema} CASCADE;
-    CREATE SCHEMA {schema};
-    GRANT ALL ON SCHEMA {schema} TO postgres;
-    GRANT ALL ON SCHEMA {schema} TO {schema};
-    """
-    pg.query(query)
+        if connect:
+            sql.connect()
+        return sql

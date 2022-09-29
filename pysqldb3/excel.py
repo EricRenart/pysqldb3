@@ -1,6 +1,7 @@
 import openpyxl as opxl
 import pandas as pd
 import os
+from pandas import testing
 from . import util
 from . import Config
 from . import pysqldb3 as pdb3
@@ -65,7 +66,7 @@ class DbConnectExcel:
         # dfquery each table name and build a list of result dfs
         dfs = []
         for tn in tbl_names:
-            dfqry = f"SELECT FROM {schema}.{tn}"
+            dfqry = f"SELECT * FROM {schema}.{tn}"
             if query:
                 dfqry = f"""{dfqry} WHERE (
                     {query}
@@ -81,13 +82,13 @@ class DbConnectExcel:
             # only one tabname in list so this is ok
             self.df_to_excel(dfs[0], filename=fp, tab_name=tab_name_list[0], as_xls=as_xls)
     
-    def df_to_excel(self, df, filename, tab_name=None, as_xls=False):
+    def df_to_excel(self, df, filename, tab_name='Sheet1', as_xls=False):
         # type: (pd.DataFrame, str, str, bool) -> None
         """
         Saves a Pandas DataFrame as an excel file at the specified path.
         :param df: Dataframe to save as excel
         :param excel_filename: Filename for excel file (omitting .xls/.xlsx)
-        :param tab_name: Name of sheet to save in Excel file. Defaults to df name.
+        :param tab_name: Name of sheet to save in Excel file. Defaults to Excel default (Sheet1)
         :param as_xls: Whether to save the df as an Excel 97 file (xls) rather than xlsx
         """
         file_with_ext = util.output_path(f"{filename}.xls")
@@ -108,7 +109,7 @@ class DbConnectExcel:
         """
         if not as_xls:
             filename = f"{filename}x"
-        if tab_name_list == None:
+        if tab_name_list != None:
             # use default tab names - Sheet1, Sheet2 etc
             for df, i in enumerate(tab_name_list):
                 tab_name_list[i] = f'Sheet{i}'

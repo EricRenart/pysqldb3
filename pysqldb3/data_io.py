@@ -4,6 +4,13 @@ import shlex
 from .cmds import *
 from .util import *
 
+def get_path_from_zip(zip_path, inner_path):
+    """
+    Gets a vsizipped path string from path to zip file and an inner path.
+    :param zip_path: Path to zip file, omitting .zip extension
+    :param inner_path: Path to file of interest (shp or otherwise) in zip file
+    """
+    return '/vsizip/' + os.path.join(zip_path, inner_path)
 
 def pg_to_sql(pg, ms, org_table, LDAP=False, spatial=True, org_schema=None, dest_schema=None, dest_table=None,
               print_cmd=False, temp=True):
@@ -194,7 +201,7 @@ def sql_to_pg(ms, pg, org_table, LDAP=False, spatial=True, org_schema=None, dest
     :param spatial: Flag for spatial table (defaults to True)
     :param org_schema: SQL Server schema for origin table (defaults to default schema function result)
     :param dest_schema: PostgreSQL schema for destination table (defaults to default schema function result)
-    :param print_cmd: Option to print he ogr2ogr command line statement (defaults to False) - used for debugging
+    :param print_cmd: Option to print the ogr2ogr command line statement (defaults to False) - used for debugging
     :param dest_table: Table name of final migrated table in PostgreSQL database
     :param temp: flag, defaults to true, for temporary tables
     :param gdal_data_loc: location of GDAL data
@@ -286,7 +293,7 @@ def sql_to_pg(ms, pg, org_table, LDAP=False, spatial=True, org_schema=None, dest
 def pg_to_pg(from_pg, to_pg, org_table, org_schema=None, dest_schema=None, print_cmd=False, dest_table=None,
              spatial=True, temp=True):
     """
-    Migrates tables from one PostgreSQL database to another PostgreSQL.
+    Migrates tables from one PostgreSQL database to another PostgreSQL database.
     :param from_pg: Source database DbConnect object
     :param to_pg: Destination database DbConnect object
     :param org_table: Source table name
@@ -353,7 +360,7 @@ def pg_to_pg(from_pg, to_pg, org_table, org_schema=None, dest_schema=None, print
 def pg_to_pg_qry(from_pg, to_pg, query, dest_schema=None, print_cmd=False, dest_table=None,
              spatial=True, temp=True):
     """
-    Migrates query results  from one PostgreSQL database to another PostgreSQL.
+    Migrates query results from one PostgreSQL database to another PostgreSQL database.
     :param from_pg: Source database DbConnect object
     :param to_pg: Destination database DbConnect object
     :param query: query in SQL
@@ -364,8 +371,6 @@ def pg_to_pg_qry(from_pg, to_pg, query, dest_schema=None, print_cmd=False, dest_
     :param temp: temporary table, defaults to true
     :return:
     """
-
-
     if not dest_schema:
         dest_schema = to_pg.default_schema
 

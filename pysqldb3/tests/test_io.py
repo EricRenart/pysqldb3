@@ -3,6 +3,7 @@ import random
 import pytest
 import configparser
 import pandas as pd
+from subprocess import CalledProcessError
 
 from .. import pysqldb3 as pysqldb, data_io
 from . import TestHelpers
@@ -228,7 +229,11 @@ class TestPgToSql:
 
 
 class TestSqlToPgQry:
-     def test_sql_to_pg_qry_basic_table(self, sql_table_name='test_sql_to_pg_qry_basic_table', pg_table_name='test_sql_to_pg_qry_basic_table'):
+     def test_sql_to_pg_qry_basic_table(self, pg_schema='testing', sql_table_name='test_sql_to_pg_qry_basic_table', pg_table_name='test_sql_to_pg_qry_basic_table'):
+         
+         if pg_schema is None:
+            pg_schema = db.default_schema
+
          # Assert pg table doesn't exist
          db.drop_table(schema=db.default_schema, table=pg_table_name)
          assert not db.table_exists(table=pg_table_name)
@@ -238,10 +243,10 @@ class TestSqlToPgQry:
          TestHelpers.set_up_simple_test_table_sql(sql, table_name=sql_table_name)
 
          # sql_to_pg_qry
-         data_io.sql_to_pg_qry(sql, db, query=f"SELECT * FROM dbo.{sql_table_name}", dest_table=pg_table_name, print_cmd=True)
+         data_io.sql_to_pg_qry(sql, db, query=f"SELECT * FROM dbo.{sql_table_name}", dest_table=pg_table_name, dest_schema=pg_schema, print_cmd=True)
 
          # Assert sql to pg query was successful (table exists)
-         assert db.table_exists(table=pg_table_name)
+         assert db.table_exists(schema=pg_schema, table=pg_table_name)
 
          # Assert df equality
          sql_df = sql.dfquery(f"""
@@ -250,7 +255,7 @@ class TestSqlToPgQry:
          """).infer_objects().replace('\s+', '', regex=True)
 
          pg_df = db.dfquery(f"""
-         SELECT * FROM {pg_table_name}
+         SELECT * FROM {pg_schema}.{pg_table_name}
          ORDER BY test_col1
          """).infer_objects().replace('\s+', '', regex=True)
 
@@ -261,14 +266,17 @@ class TestSqlToPgQry:
                                        check_column_type=False)
 
          # Cleanup
-         db.drop_table(schema=db.default_schema, table=pg_table_name)
+         db.drop_table(schema=pg_schema, table=pg_table_name)
          sql.drop_table(schema='dbo', table=sql_table_name)
 
-     def test_sql_to_pg_qry_spatial(self, table_name='tst_sql_to_pg_qry_table', spatial_table_name='tst_sql_to_pg_qry_spatial_table'):
+     def test_sql_to_pg_qry_spatial(self, pg_schema='testing', table_name='tst_sql_to_pg_qry_table', spatial_table_name='tst_sql_to_pg_qry_spatial_table'):
+
+        if pg_schema == None:
+            pg_schema = db.default_schema
 
         # First, check to see if table_name and spatial_table_name exist as tables in the db
-        db.drop_table(schema=db.default_schema, table=table_name)
-        db.drop_table(schema=db.default_schema, table=spatial_table_name)
+        db.drop_table(schema=pg_schema, table=table_name)
+        db.drop_table(schema=pg_schema, table=spatial_table_name)
 
         # Assert they don't
         assert not db.table_exists(table=table_name)
@@ -312,10 +320,10 @@ class TestSqlToPgQry:
         assert len(spatial_df) == len(not_spatial_df) and len(joined_df) == len(joined_df[joined_df['geom_x'] != joined_df['geom_y']])
      
        # cleanup
-        db.drop_table(schema=db.default_schema, table=table_name)
-        db.drop_table(schema=db.default_schema, table=spatial_table_name)
+        db.drop_table(schema=pg_schema, table=table_name)
+        db.drop_table(schema=pg_schema, table=spatial_table_name)
 
-     def test_sql_to_pg_qry_dest_schema(self, schema='working', table_name='test_sql_to_pg_qry_table'):
+     def test_sql_to_pg_qry_dest_schema(self, schema='testing', table_name='test_sql_to_pg_qry_table'):
          # Assert doesn't exist already
          db.drop_table(schema=schema, table=table_name)
          assert not db.table_exists(schema=schema, table=table_name)
@@ -340,14 +348,12 @@ class TestSqlToPgQry:
          sql_df = sql.dfquery(f"""
          SELECT * from dbo.{table_name}
          ORDER BY test_col1
-         """.format(test_sql_to_pg_qry_table)
-         ).infer_objects().replace('\s+', '', regex=True)
+         """).infer_objects().replace('\s+', '', regex=True)
 
          pg_df = db.dfquery(f"""
          SELECT * FROM {schema}.{table_name}
          ORDER BY test_col1
-         """.format(test_sql_to_pg_qry_table)
-         ).infer_objects().replace('\s+', '', regex=True)
+         """).infer_objects().replace('\s+', '', regex=True)
 
          sql_df.columns = [c.lower() for c in list(sql_df.columns)]
 
@@ -360,17 +366,48 @@ class TestSqlToPgQry:
          db.drop_table(schema=schema, table=table_name)
          sql.drop_table(schema='dbo', table=test_sql_to_pg_qry_table)
 
-     def test_sql_to_pg_qry_no_dest_table_input(self):
-         return
+     def test_sql_to_pg_qry_no_dest_table_input(self, ms_schema='dbo', pg_schema='testing'):
+         ms = TestHelpers.get_sql_dbc_instance(connect=True)
+         pg = TestHelpers.get_pg_dbc_instance(connect=True)
+         table_name = f"test_sql_to_pg_qry_no_dest_table_input_{ms.user}"
+         ms.drop_table(schema=ms_schema, table=table_name)
+         pg.drop_table(schema=pg_schema, table=table_name)
+         assert not ms.table_exists(schema=ms_schema, table=table_name) or pg.table_exists(schema=pg_schema, table=table_name)
 
-     def test_sql_to_pg_qry_empty_query_error(self):
-         return
+         # attempt query without a table name in SELECT FROM
+         with pytest.raises(CalledProcessError):
+            data_io.sql_to_pg_qry(ms, pg, query=f"SELECT * FROM {ms_schema}.{table_name}", spatial=False, 
+            dest_schema=pg_schema, dest_table=None)
 
-     def test_sql_to_pg_qry_empty_wrong_layer_error(self):
-         return
+     def test_sql_to_pg_qry_empty_query_error(self, ms_schema='dbo', pg_schema='testing'):
+         ms = TestHelpers.get_sql_dbc_instance(connect=True)
+         pg = TestHelpers.get_pg_dbc_instance(connect=True)
+         table_name = f"test_sql_to_pg_qry_empty_query_err_{ms.user}"
+         ms.drop_table(schema=ms_schema, table=table_name)
+         pg.drop_table(schema=pg_schema, table=table_name)
+         assert not ms.table_exists(schema=ms_schema, table=table_name) or pg.table_exists(schema=pg_schema, table=table_name)
 
-     def test_sql_to_pg_qry_empty_overwrite_error(self):
-         return
+         # attempt empty query
+         with pytest.raises(CalledProcessError):
+            data_io.sql_to_pg_qry(ms, pg, query=None, spatial=False, dest_schema=pg_schema, dest_table=table_name)
+
+     def test_sql_to_pg_qry_empty_wrong_layer_error(self, ms_schema='dbo', pg_schema='testing'):
+         ms = TestHelpers.get_sql_dbc_instance(connect=True)
+         pg = TestHelpers.get_pg_dbc_instance(connect=True)
+         table_name = f"test_sql_to_pg_qry_empty_wrong_layer_err_{ms.user}"
+         ms.drop_table(schema=ms_schema, table=table_name)
+         pg.drop_table(schema=pg_schema, table=table_name)
+
+         # TODO: implement this
+
+     def test_sql_to_pg_qry_empty_overwrite_error(self, ms_schema='dbo', pg_schema='testing'):
+         ms = TestHelpers.get_sql_dbc_instance()
+         pg = TestHelpers.get_pg_dbc_instance()
+         table_name = f"test_sql_to_pg_qry_empty_overwrite_err_{ms.user}"
+         ms.drop_table(schema=ms_schema, table=table_name)
+         pg.drop_table(schema=pg_schema, table=table_name)
+
+         # TODO: implement this
 
      # Note: temporary functionality will be tested separately!
      # Still to test: LDAP, print_cmd
@@ -459,22 +496,49 @@ class TestSqlToPg:
         db.drop_table(schema=dest_schema_name, table=table)
         sql.drop_table(schema=sql_schema, table=table)
 
-     def test_sql_to_pg_org_schema_name(self, table='test_sql_to_pg_orig_schema_table', orig_schema_name='dbo'):
+     def test_sql_to_pg_org_schema_name(self, dest_schema_name='testing'):
         # TODO: test with non-DBO table
+        ms = TestHelpers.get_sql_dbc_instance(connect=True)
+        pg = TestHelpers.get_pg_dbc_instance(connect=True)
+        table = f'test_sql_to_pg_orig_schema_name_{ms.user}'
 
         # Assert table doesn't exist in MSSQL
+        sql.drop_table(schema='dbo', table=table)
+        assert not sql.table_exists(schema='dbo', table=table)
+
+        # test
+        data_io.sql_to_pg(ms, pg, org_table=table, org_schema='dbo', dest_schema=dest_schema_name)
+        assert pg.table_exists(table)
+
+     def test_sql_to_pg_schema_name_non_dbo(self, orig_schema_name='testing', dest_schema_name='testing'):
+        ms = TestHelpers.get_sql_dbc_instance(connect=True)
+        pg = TestHelpers.get_pg_dbc_instance(connect=True)
+        table = f'test_sql_to_pg_nondbo_schema_name_{ms.user}'
+        
+        # Assert table doesnt exist in mssql
         sql.drop_table(schema=orig_schema_name, table=table)
-        assert not db.table_exists(schema=orig_schema_name, table=table)
+        assert not sql.table_exists(schema=orig_schema_name, table=table)
 
-        return
+        # test
+        data_io.sql_to_pg(ms, pg, org_schema=orig_schema_name, org_table=table,
+        dest_schema=dest_schema_name, dest_table=table)
+        assert pg.table_exists(table)
 
-     def test_sql_to_pg_org_schema_name_non_dbo(self, table='test_sql_to_pg_orig_schema_table_non_dbo', orig_schema_name='dbo'):
-        return self.test_sql_to_pg_org_schema_name(table=table, orig_schema_name=orig_schema_name)
-
-     def test_sql_to_pg_spatial(self, table='test_sql_to_pg_spatial_table', orig_schema_name='dbo'):
+     def test_sql_to_pg_spatial(self, orig_schema_name='dbo', dest_schema_name='testing'):
         # TODO: when adding spatial features like SRID via a_srs, test spatial
+        ms.drop_table(schema=orig_schema_name, table=table)
 
-        return
+        # set up a spatialtable in SQL
+        ms = TestHelpers.get_sql_dbc_instance(connect=True)
+        pg = TestHelpers.get_pg_dbc_instance(connect=True)
+        table = f'test_sql_to_pg_spatial_{ms.user}'
+        TestHelpers.set_up_test_table_sql(ms, schema=orig_schema_name, table_name=table)
+
+        # test
+        data_io.sql_to_pg(ms, pg, org_table=table, org_schema=orig_schema_name, dest_table=table, 
+        dest_schema_name=dest_schema_name, spatial=True)
+        assert pg.table_exists(table)
+        # assert spatiality?
 
      def test_sql_to_pg_wrong_layer_error(self):
          return
@@ -484,6 +548,11 @@ class TestSqlToPg:
 
      # Note: temporary functionality will be tested separately!
      # Still to test: LDAP, print_cmd
+     def test_sql_to_pg_ldap(self):
+        pass
+
+     def test_sql_to_pg_print_cmd(self):
+        pass
 
 
 class TestPgToPg:

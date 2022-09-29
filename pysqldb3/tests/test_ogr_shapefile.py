@@ -48,7 +48,7 @@ class TestOGRShapefile():
 
     @pytest.mark.ogr
     def test_ogr_shapefile_read_to_ms(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         table_name = f'test_ogr_shp_to_ms_table_{ms.user}'
         shp_dir = TestHelpers.test_data_folder_path('test_ms1.shp')
         ogr_cmds.read_shapefile_ms(shp_path=shp_dir, tbl_name=table_name, capture_output=True)
@@ -59,7 +59,7 @@ class TestOGRShapefile():
 
     @pytest.mark.ogr
     def test_ogr_shapefile_write_ms_to_shp(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         table_name = f'test_ogr_ms_to_shp_table_{ms.user}'
         shp_dir = TestHelpers.test_data_folder_path('test_ms2.shp')
         ogr_cmds.write_shapefile_ms(shp_path=shp_dir, tbl_name=table_name, capture_output=True)

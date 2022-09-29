@@ -22,7 +22,7 @@ class TestExcel:
         assert path.splitext(excel_path)[1] == 'xlsx'
 
         # Open excel_path as a new df
-        test_df_2 = pd.read_excel(excel_path)
+        test_df_2 = pd.read_excel(excel_path, 'Sheet1')
 
         # Assert dfs are equal
         assert test_df_2.equals(test_df)
@@ -35,10 +35,9 @@ class TestExcel:
 
         # Assert existance and xls format
         assert path.exists(excel_path)
-        assert path.splitext(excel_path)[1] == 'xls'
-
+        assert path.splitext(excel_path)[1] == 'xlsx'
         # Open excel_path as a new df
-        test_df_2 = pd.read_excel(excel_path)
+        test_df_2 = pd.read_excel(excel_path, 'Sheet1')
 
         # Assert dfs are equal
         assert test_df_2.equals(test_df)
@@ -170,7 +169,7 @@ class TestExcel:
             pg.drop_table(schema='testing', table=table_names[i])
 
     def test_ms_to_excel(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         excel_path = TestHelpers.test_data_folder_path('testmstoexcel.xlsx')
         
         # create random df
@@ -190,7 +189,7 @@ class TestExcel:
         ms.drop_table(schema=testing_schema, table=table_name)
 
     def test_ms_to_excel_multiple_tabs(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         excel_path = TestHelpers.test_data_folder_path('testmstoexcelmulti.xlsx')
         
         # create random df's
@@ -215,7 +214,7 @@ class TestExcel:
         ms.drop_table(table_names[2], schema=testing_schema)
     
     def test_ms_to_excel_multiple_tabs_custom_names(self):
-        ms = TestHelpers.get_ms_dbc_instance()
+        ms = TestHelpers.get_sql_dbc_instance()
         excel_path = TestHelpers.test_data_folder_path('testmstoexcelmultinamed.xlsx')
         
         # create random df's
