@@ -36,8 +36,8 @@ VARCHAR_MAX = {
 def clean_query_special_characters(query_string):
     # type(str) -> str
     """
-    Cleans special characters
-    :param query_string:
+    Cleans special characters from a query.
+    :param query_string: SQL query string to clean
     :return: cleaned query string
     """
     query_string.replace('%', '%%')
@@ -48,8 +48,8 @@ def clean_query_special_characters(query_string):
 
 def clean_geom_column(db, table, schema):
     """
-    Checks for column named wkb_geometry and renames to geom
-    :param db: pysql.DbConect object
+    Checks for column named wkb_geometry in table and renames to geom
+    :param db: pysql.DbConnect object
     :param table: table name
     :param schema: database schema name
     :return:
@@ -86,7 +86,7 @@ def get_unique_table_schema_string(tbl_str, db_type):
 
     :param tbl_str: Table or schema string
     :param db_type: Type of DB
-    :return:
+    :return: Cleaned table name for specific db type
     """
     if not tbl_str:
         return None
@@ -123,7 +123,7 @@ def get_query_table_schema_name(tbl_str, db_type):
 
     :param tbl_str: Table or schema string
     :param db_type: Type of DB
-    :return:
+    :return: Table string with quotes or brackets depending on db
     """
     if not tbl_str:
         return tbl_str
@@ -298,9 +298,9 @@ def clean_df_before_output(df, geom_name="geom"):
     1. Converts geom col
     2. Converts unicode errors
 
-    :param df:
-    :param geom_name:
-    :return:
+    :param df: dataframe to clean
+    :param geom_name: geometry column name in db, default geom
+    :return: cleaned dataframe
     """
     df = convert_geom_col(df, geom_name)
     return df
@@ -338,10 +338,11 @@ def print_cmd_string(password_list, cmd_string):
 
 def parse_shp_path(path=None, shp_name=None):
     """
-    Standardizes extracting shpfile name from path process, if shp_name provided that will override anything in the path
+    Standardizes extracting shpfile name from path process.
+    If shp_name is provided, that will override anything in the path
     :param path: folder path with or without shp
-    :param shp_name: shapefile name
-    :return: path (without shp), shp_name
+    :param shp_name: shapefile name, will override folder path name
+    :return: 2-tuple (path without shp, shp_name)
     """
     # type: (str, str)
     if not path:

@@ -33,6 +33,7 @@ class Query:
     def __init__(self, dbo, query_string, strict=True, permission=True, temp=True, comment='', no_comment=False,
                  timeme=True, iterate=False, lock_table=None, internal=False):
         """
+        Creates a new Query instance.
         :param dbo: DbConnect object
         :param query_string: String/unicode sql query to be run
         :param strict: If true will run sys.exit on failed query attempts
@@ -42,7 +43,7 @@ class Query:
         :param no_comment:
         :param timeme: Flag for if table is temporary or permanent (defaults toTrue)
         :param iterate:
-        :param lock_table:
+        :param lock_table: Whether to lock table for this Query in order to block other queries on the table
         """
         # Explicitly in __init__
         self.dbo = dbo
@@ -101,6 +102,9 @@ class Query:
             raise e
 
     def __perform_lock_routine(self, cur):
+        """
+        Lock the specified table
+        """
         if self.lock_table:
             try:
                 print("- Trying to obtain exclusive lock on table {}.".format(self.lock_table))
@@ -112,7 +116,7 @@ class Query:
     def __query_data(self, cur):
         """
         Parses the results of the query and stores data and columns in Query class attribute
-        :param cur:
+        :param cur: psycopg2 Connection to fetch data from
         :return:
         """
         self.has_data = True
@@ -258,6 +262,9 @@ class Query:
     def query_creates_table(query_string, default_schema, db_type):
         """
         Checks if query generates new tables
+        :param query_string: SQL query string to check
+        :param default_schema: schema to check
+        :param db_type: DB type (PG or MS)
         :return: list of sets of {schema.table}
         """
         # remove mulitple spaces
@@ -318,6 +325,7 @@ class Query:
         Checks if query drops any tables.
         Tables that were dropped should be removed from the to drop queue. This should help
         avoid dropping tables with coincident names.
+        :param query_string: SQL query string to check
         :return: list of tables dropped (including any db/schema info)
         """
         _ = query_string.split()
@@ -344,6 +352,8 @@ class Query:
     def query_renames_table(query_string, default_schema):
         """
         Checks if a rename query is run
+        :param query_string: SQL query string to check
+        :param default_schema: Schema to check in db
         :return: Dict {schema.new table name: original table name}
         """
         _ = query_string.split()
@@ -470,10 +480,10 @@ class Query:
         Writes results of the iterable query to a csv file; iterating over cursor results.
         This is different from chunked_write_csv in that the cursor only obtains 20k records at a time, meaning
         it works if the data itself is too big to even load at once.
-        :param output:
-        :param open_file:
-        :param quote_strings:
-        :param sep:
+        :param output: String for csv output file location (defaults to current directory)
+        :param open_file: Boolean flag to auto open output file
+        :param quote_strings: Boolean flag for adding quote strings to output (defaults to True, QUOTE_ALL)
+        :param sep: Separator for csv (defaults to ',')
         :return:
         """
         self.has_data = True
@@ -639,12 +649,12 @@ class Query:
                      srid=2263):
         """
         Writes results of the query to a shp file by calling Shapefile ogr command's in write_shp fn
-        :param dbo:
-        :param query:
-        :param path:
-        :param shp_name:
+        :param dbo: Database owner
+        :param query: SQL query string to be run
+        :param path: SHPfile output filepath (not including filename)
+        :param shp_name: Name of SHPfile
         :param cmd:
-        :param gdal_data_loc:
+        :param gdal_data_loc: Path to GDAL library on pc
         :param print_cmd: Optional flag to print the GDAL command being used; defaults to False
         :param srid: sets SRID
         :return:

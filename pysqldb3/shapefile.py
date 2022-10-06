@@ -32,9 +32,8 @@ class Shapefile:
     def name_extension(name):
         """
         Adds .shp to name,  if not there
-
-        :param name:
-        :return:
+        :param name: name of shpfile to add extension to
+        :return: name with extension
         """
         if '.shp' in name:
             return name
@@ -43,6 +42,7 @@ class Shapefile:
 
     def write_shp(self, print_cmd=False):
         """
+        Writes out a shapefile
         :param print_cmd: Optional flag to print the GDAL command being used; defaults to False
         :return:
         """
@@ -160,9 +160,8 @@ class Shapefile:
     def read_shp(self, precision=False, private=False, shp_encoding=None, print_cmd=False):
         """
         Reads a shapefile in as a table
-
-        :param precision:
-        :param private:
+        :param precision: boolean for -lco precision option
+        :param private: whether created table should be private
         :param shp_encoding: encoding of data within Shapefile
         :param print_cmd: Optional flag to print the GDAL command that is being used; defaults to False
         :return:
@@ -273,7 +272,7 @@ class Shapefile:
     def read_feature_class(self, private=False, print_cmd=False, fc_encoding=None):
         """
         Reads a feature of a shapefile in as a table
-        :param private:
+        :param private: Whether the created table should be private
         :param print_cmd: Optional flag to print the GDAL command that is being used; defaults to False
         :param fc_encoding: Optional encoding of data within feature class
         :return:
@@ -357,8 +356,7 @@ class Shapefile:
 
     def rename_geom(self):
         """
-        Renames wkb_geometry to geom, along with index
-
+        Renames wkb_geometry column to geom, along with index
         :return:
         """
         self.dbo.query("""

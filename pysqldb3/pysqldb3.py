@@ -97,7 +97,7 @@ class DbConnect:
         # type: (DbConnect) -> list
         """
         Helper function to return the most recent query data
-        :return:
+        :return: most recent query data
         """
         if internal:
             return self.internal_queries[-1].data
@@ -107,7 +107,7 @@ class DbConnect:
     def __set_type(self):
         # type: (DbConnect) -> None
         """
-        Sets standardized type of Db
+        Sets standardized type of DB
         """
         if self.type and type(self.type) == str and self.type.upper() in POSTGRES_TYPES:
             self.type = PG
@@ -467,7 +467,7 @@ class DbConnect:
     def check_logs(self, schema=None):
         """
         :param schema: schema to check; defaults to the default_schema
-        :return: df
+        :return: dataframe of logs
         """
         if not schema:
             schema = self.default_schema
@@ -478,7 +478,7 @@ class DbConnect:
         """
         :param table_name: name of table to check
         :param schema: schema to check; defaults to the default_schema
-        :return: df
+        :return: dataframe of table in log
         """
         if not schema:
             schema = self.default_schema
@@ -554,8 +554,8 @@ class DbConnect:
         Checks if table exists in the database
         :param table: table name
         :param kwargs:
-                :schema: schema for check (defaults to default schema)
-        :return: bool
+        :param schema: schema for check (defaults to default schema)
+        :return: True if table exists in db, False otherwise
         """
         schema = kwargs.get('schema', self.default_schema)
         server = kwargs.get('server', self.server)
@@ -608,7 +608,7 @@ class DbConnect:
         # type: (DbConnect) -> list
         """
         Gets a list of schemas available in the database
-        :return: list of schemas
+        :return: list of schemas in database
         """
         if self.type == MS:
             self.query(MS_GET_SCHEMAS_QUERY, timeme=False, internal=True)
@@ -619,6 +619,13 @@ class DbConnect:
         return [schema_row[0] for schema_row in self.__get_most_recent_query_data(internal=True)]
 
     def get_table_columns(self, table, schema=None, full=False):
+        """
+        Gets a list of the columns in the specified table
+        :param table: Table in db to get columns for
+        :param schema: Schema in db to use
+        :param full: Return all columns in table
+        :return: List of column names in table
+        """
         if not schema:
             schema = self.default_schema
         if full:
@@ -658,7 +665,7 @@ class DbConnect:
         :param timeme: Will print time of query
         :param no_comment: Will not comment on newly created tables
         :param comment: The itself; if the above is False
-        :param lock_table:
+        :param lock_table: Whether to acquire a lock on the table to block other queries
         :param return_df: boolean that returns Pandas dataframe of data if true (defaults to false)
         :param days: if temp=True, the number of days that the temp table will be kept. Defaults to 7.
         :param internal: Boolean flag for internal processes
@@ -1651,7 +1658,7 @@ class DbConnect:
         :param shp_name: Shapefile name (ends in .shp)
         :param cmd: Optional ogr2ogr command to overwrite default
         :param srid:  SRID to use (defaults to 2263)
-        :param port:
+        :param port: Port number for db server
         :param gdal_data_loc: File path fo the GDAL data (defaults to C:\\Program Files (x86)\\GDAL\\gdal-data)
         :param precision:  Sets precision flag in ogr (defaults to -lco precision=NO)
         :param private: Flag for permissions in database (Defaults to False - will only grant select to public)

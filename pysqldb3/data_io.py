@@ -8,8 +8,8 @@ from util import *
 def pg_to_sql(pg, ms, org_table, LDAP=False, spatial=True, org_schema=None, dest_schema=None, dest_table=None,
               print_cmd=False, temp=True):
     """
-    Migrates tables from Postgres to SQL Server, generates spatial tables in MS if spatial in PG.
-
+    Migrates tables from PostgreSQL db to SQL Server db.
+    Generates spatial tables in SQL Server if they exist in PostgreSQL.
     :param pg: DbConnect instance connecting to PostgreSQL source database
     :param ms: DbConnect instance connecting to SQL Server destination database
     :param org_table: table name of table to migrate
@@ -97,9 +97,8 @@ def pg_to_sql(pg, ms, org_table, LDAP=False, spatial=True, org_schema=None, dest
 def sql_to_pg_qry(ms, pg, query, LDAP=False, spatial=True, dest_schema=None, print_cmd=False, temp=True,
                   dest_table=None):
     """
-    Migrates the result of a query from SQL Server database to PostgreSQL database, and generates spatial tables in
-    PG if spatial in MS.
-
+    Migrates the result of a query from an SQL Server database to a PostgreSQL database.
+    Generates spatial tables in PostgreSQL if they exist in SQL Server.
     :param ms: DbConnect instance connecting to SQL Server destination database
     :param pg: DbConnect instance connecting to PostgreSQL source database
     :param query: query in SQL
@@ -184,7 +183,7 @@ def sql_to_pg(ms, pg, org_table, LDAP=False, spatial=True, org_schema=None, dest
               dest_table=None, temp=True, gdal_data_loc=GDAL_DATA_LOC, pg_encoding='UTF8'):
     """
     Migrates tables from SQL Server to PostgreSQL, generates spatial tables in PG if spatial in MS.
-
+    Generates spatial tables in the PostgreSQL database if they exist in SQL Server.
     :param ms: DbConnect instance connecting to SQL Server destination database
     :param pg: DbConnect instance connecting to PostgreSQL source database
     :param org_table: table name of table to migrate
@@ -195,7 +194,7 @@ def sql_to_pg(ms, pg, org_table, LDAP=False, spatial=True, org_schema=None, dest
     :param print_cmd: Option to print he ogr2ogr command line statement (defaults to False) - used for debugging
     :param dest_table: Table name of final migrated table in PostgreSQL database
     :param temp: flag, defaults to true, for temporary tables
-    :param gdal_data_loc: location of GDAL data
+    :param gdal_data_loc: location of GDAL data on pc
     :param pg_encoding: encoding to use for PG client (defaults to UTF-8)
     :return:
     """
@@ -284,7 +283,8 @@ def sql_to_pg(ms, pg, org_table, LDAP=False, spatial=True, org_schema=None, dest
 def pg_to_pg(from_pg, to_pg, org_table, org_schema=None, dest_schema=None, print_cmd=False, dest_table=None,
              spatial=True, temp=True):
     """
-    Migrates tables from one PostgreSQL database to another PostgreSQL.
+    Migrates tables from one PostgreSQL database to another PostgreSQL database.
+    Generates spatial tables in the destination database if they exist in the source database.
     :param from_pg: Source database DbConnect object
     :param to_pg: Destination database DbConnect object
     :param org_table: Source table name
@@ -292,7 +292,7 @@ def pg_to_pg(from_pg, to_pg, org_table, org_schema=None, dest_schema=None, print
     :param dest_schema: PostgreSQL schema for destination table (defaults to default schema)
     :param dest_table: New name for destination table if None will keep original
     :param print_cmd: Option to print he ogr2ogr command line statement (defaults to False) - used for debugging
-    :param spatial: Flag for spatial table (defaults to True)
+    :param spatial: Flag to generate spatial tables in destination db (defaults to True)
     :param temp: temporary table, defaults to true
     :return:
     """

@@ -37,6 +37,10 @@ class SqlDriver:
 
     @staticmethod
     def get_drivers():
+        """
+        Gets a list of ODBC and native drivers on the system
+        :return: 2-tuple (list of ODBC drivers, list of native SQL drivers)
+        """
         odbc_drivers = list()
         native_drivers = list()
         for i in pyodbc.drivers():
@@ -47,12 +51,20 @@ class SqlDriver:
         return odbc_drivers, native_drivers
 
     def get_latest_drivers(self):
+        """
+        Updates stored ODBC driver path and native driver path to latest versions
+        :return:
+        """
         odbc_drivers, native_drivers = self.get_drivers()
         self.odbc_driver = self.choose_max(odbc_drivers)
         self.native_driver = self.choose_max(native_drivers)
 
 
 def read_config(confi_path='.\config.cfg'):
+    """
+    Read in main config file
+    :param config_path: Path to config file with filename, default config.cfg
+    """
     sections = defaultdict(dict)
 
     if os.path.isfile(confi_path):
@@ -71,6 +83,10 @@ def read_config(confi_path='.\config.cfg'):
 
 
 def write_config(confi_path='.\config.cfg'):
+    """
+    Write out main config file.
+    :param confi_path: Output path for config file with filename, default config.cfg
+    """
     open_config = False
     required_sections = {
         'ODBC Drivers': {'ODBC_DRIVER': '', 'NATIVE_DRIVER': ''},
