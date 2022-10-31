@@ -39,7 +39,7 @@ class DbConnect:
         server (string): default None
         database (string): default None
         port (int): default 5432
-        schema (string): default public (PG), dbo (MS)
+        schema (string): Schema in db to use. If None, will attempt to guess based on db type. Default None.
         use_native_driver (bool): defaults to False
         default (bool): defaults to False; connects to ris db automatically
         quiet (bool): automatically performs all tasks quietly; defaults to False
