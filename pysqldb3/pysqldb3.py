@@ -28,7 +28,7 @@ class DbConnect:
     """
 
     def __init__(self, user=None, password=None, ldap=False, type=None, server=None, database=None, port=5432,
-                 allow_temp_tables=False, use_native_driver=True, default=False, quiet=False):
+                 schema=None, allow_temp_tables=False, use_native_driver=True, default=False, quiet=False):
         # type: (DbConnect, str, str, bool, str, str, str, int, bool, bool, bool, bool) -> None
         """
         :params:
@@ -39,6 +39,7 @@ class DbConnect:
         server (string): default None
         database (string): default None
         port (int): default 5432
+        schema (string): Schema in db to use. If None, will attempt to guess based on db type. Default None.
         use_native_driver (bool): defaults to False
         default (bool): defaults to False; connects to ris db automatically
         quiet (bool): automatically performs all tasks quietly; defaults to False
@@ -69,13 +70,16 @@ class DbConnect:
         self.data = None
         self.internal_data = None
         self.last_query = None
-        self.default_schema = None
+        if schema is not None:
+            self.default_schema = schema
         self.connection_count = 0
         self.__set_type()
 
         # Connect and clean logs
         self.__get_credentials()
-        self.default_schema = self.__get_default_schema(self.type)
+        if schema is None:
+            # type should be set by the time this gets called
+            self.default_schema = self.__get_default_schema(self.type)
         self.log_table = TEMP_LOG_TABLE.format(self.user)
         self.__cleanup_subroutine()
 
@@ -145,11 +149,16 @@ class DbConnect:
             self.type = config.get('DEFAULT DATABASE', 'type')
             self.__set_type()
             self.server = config.get('DEFAULT DATABASE', 'server')
+            self.port = config.get('DEFAULT DATABASE', 'port')
             self.database = config.get('DEFAULT DATABASE', 'database')
+            self.user = config.get('DEFAULT DATABASE', 'user')
+            self.password = config.get('DEFAULT DATABASE', 'password')
+            self.default_schema = config.get('DEFAULT DATABASE', 'schema')
+            self.LDAP = config.get('DEFAULT DATABASE', 'use_ldap')
 
         # Only prompts user if missing necessary information
         if ((self.LDAP and not all((self.database, self.server))) or
-                (not self.LDAP and (not all((self.user, self.password, self.database, self.server))))):
+                (not self.LDAP and (not all((self.server, self.database, self.user, self.password))))):
 
             print('\nAdditional database connection details required:')
 
@@ -164,6 +173,10 @@ class DbConnect:
                 self.user = input('User name ({}):'.format(self.database.lower()))
             if not self.password and not self.LDAP:
                 self.password = getpass.getpass('Password ({})'.format(self.database.lower()))
+
+            # if a schema isn't specified, get default
+            if not self.default_schema:
+                self.default_schema = self.__get_default_schema(self.type)
 
     def __connect_pg(self):
         # type: (DbConnect) -> None

@@ -82,8 +82,9 @@ def write_config(confi_path='.\config.cfg'):
     open_config = False
     required_sections = {
         'ODBC Drivers': {'ODBC_DRIVER': '', 'NATIVE_DRIVER': ''},
-        'GDAL DATA': {'GDAL_DATA_LOC': ''},
-        'DEFAULT DATABASE': {'type': '', 'server': '', 'database': ''}
+        'GDAL DATA': {'GDAL_DATA': ''},
+        'DEFAULT DATABASE': {'type': 'PG', 'server': '', 'port': '5432', 'database': '',
+                             'user': '', 'password': '', 'schema': 'public', 'use_ldap': 'false'}
     }
     existing_sections = read_config(confi_path)
 
