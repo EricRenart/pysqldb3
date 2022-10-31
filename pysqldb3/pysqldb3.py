@@ -28,7 +28,7 @@ class DbConnect:
     """
 
     def __init__(self, user=None, password=None, ldap=False, type=None, server=None, database=None, port=5432,
-                 allow_temp_tables=False, use_native_driver=True, default=False, quiet=False):
+                 schema=None, allow_temp_tables=False, use_native_driver=True, default=False, quiet=False):
         # type: (DbConnect, str, str, bool, str, str, str, int, bool, bool, bool, bool) -> None
         """
         :params:
@@ -39,6 +39,7 @@ class DbConnect:
         server (string): default None
         database (string): default None
         port (int): default 5432
+        schema (string): default public (PG), dbo (MS)
         use_native_driver (bool): defaults to False
         default (bool): defaults to False; connects to ris db automatically
         quiet (bool): automatically performs all tasks quietly; defaults to False
@@ -69,13 +70,16 @@ class DbConnect:
         self.data = None
         self.internal_data = None
         self.last_query = None
-        self.default_schema = None
+        if schema is not None:
+            self.default_schema = schema
         self.connection_count = 0
         self.__set_type()
 
         # Connect and clean logs
         self.__get_credentials()
-        self.default_schema = self.__get_default_schema(self.type)
+        if schema is None:
+            # type should be set by the time this gets called
+            self.default_schema = self.__get_default_schema(self.type)
         self.log_table = TEMP_LOG_TABLE.format(self.user)
         self.__cleanup_subroutine()
 
