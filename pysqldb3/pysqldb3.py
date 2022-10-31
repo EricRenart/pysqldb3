@@ -145,11 +145,16 @@ class DbConnect:
             self.type = config.get('DEFAULT DATABASE', 'type')
             self.__set_type()
             self.server = config.get('DEFAULT DATABASE', 'server')
+            self.port = config.get('DEFAULT DATABASE', 'port')
             self.database = config.get('DEFAULT DATABASE', 'database')
+            self.user = config.get('DEFAULT DATABASE', 'user')
+            self.password = config.get('DEFAULT DATABASE', 'password')
+            self.default_schema = config.get('DEFAULT DATABASE', 'schema')
+            self.LDAP = config.get('DEFAULT DATABASE', 'use_ldap')
 
         # Only prompts user if missing necessary information
         if ((self.LDAP and not all((self.database, self.server))) or
-                (not self.LDAP and (not all((self.user, self.password, self.database, self.server))))):
+                (not self.LDAP and (not all((self.server, self.database, self.user, self.password))))):
 
             print('\nAdditional database connection details required:')
 
@@ -164,6 +169,10 @@ class DbConnect:
                 self.user = input('User name ({}):'.format(self.database.lower()))
             if not self.password and not self.LDAP:
                 self.password = getpass.getpass('Password ({})'.format(self.database.lower()))
+
+            # if a schema isn't specified, get default
+            if not self.default_schema:
+                self.default_schema = self.__get_default_schema(self.type)
 
     def __connect_pg(self):
         # type: (DbConnect) -> None
