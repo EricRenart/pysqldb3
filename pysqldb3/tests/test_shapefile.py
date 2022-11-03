@@ -29,10 +29,10 @@ sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         # use_native_driver=False # this is needed for spatial data types
                         )
 
-pg_table_name = 'pg_test_table_{}'.format(db.user)
-test_read_shp_table_name = 'test_read_shp_table_{}'.format(db.user)
-test_write_shp_table_name = 'test_write_shp_table_{}'.format(db.user)
-test_reuploaded_table_name = 'test_write_reuploaded_{}'.format(db.user)
+pg_table_name = f'pg_test_table_{db.user}'
+test_read_shp_table_name = f'test_read_shp_table_{db.user}'
+test_write_shp_table_name = f'test_write_shp_table_{db.user}'
+test_reuploaded_table_name = f'test_write_reuploaded_{db.user}'
 
 ms_schema = 'dbo'
 pg_schema = 'working'
@@ -57,25 +57,23 @@ class TestReadShpPG:
 
         # Assert read_shp happened successfully and contents are correct
         assert db.table_exists(schema=pg_schema, table=test_read_shp_table_name)
-        table_df = db.dfquery('select * from {}.{}'.format(pg_schema, test_read_shp_table_name))
+        table_df = db.dfquery(f'select * from {pg_schema}.{test_read_shp_table_name}')
 
         assert set(table_df.columns) == {'gid', 'some_value', 'geom', 'ogc_fid'}
         assert len(table_df) == 2
 
         # Assert distance between geometries is 0 when recreating from raw input
         # This method was used because the geometries themselves may be recorded differently but mean the same (after mapping on QGIS)
-        diff_df = db.dfquery("""
-        select distinct st_distance(raw_inputs.geom,
-        st_transform(st_setsrid(end_table.geom, 4326),2263)
-        )::int as distance
+        diff_df = db.dfquery(f"""
+        select distinct st_distance(raw_inputs.geom, st_transform(st_setsrid(end_table.geom, 4326),2263))::int as distance
         from (
             select 1 as id, st_setsrid(st_point(1015329.1, 213793.1), 2263) as geom
             union
             select 2 as id, st_setsrid(st_point(1015428.1, 213086.1), 2263) as geom
         ) raw_inputs
-        join {}.{} end_table
-        on raw_inputs.id=end_table.gid::int
-        """.format(pg_schema, test_read_shp_table_name))
+        join {pg_schema}.{test_read_shp_table_name} end_table
+            on raw_inputs.id=end_table.gid::int
+        """)
 
         assert len(diff_df) == 1
         assert int(diff_df.iloc[0]['distance']) == 0
@@ -115,7 +113,7 @@ class TestReadShpPG:
             select 2 as id, st_setsrid(st_point(1015428.1, 213086.1), 2263) as geom
         ) raw_inputs
         join {pg_schema}.test end_table
-        on raw_inputs.id=end_table.gid::int
+                on raw_inputs.id=end_table.gid::int
         """)
         assert len(diff_df) == 1
         assert int(diff_df.iloc[0]['distance']) == 0
@@ -136,25 +134,25 @@ class TestReadShpPG:
         s.read_shp(print_cmd=True)
 
         # Assert read_shp happened successfully and contents are correct
+
         assert db.table_exists(schema=db.default_schema, table=test_read_shp_table_name)
-        table_df = db.dfquery('select * from {}'.format(test_read_shp_table_name))
+        table_df = db.dfquery(f'select * from {test_read_shp_table_name}')
 
         assert set(table_df.columns) == {'some_value', 'ogc_fid', 'gid', 'geom'}
         assert len(table_df) == 2
 
         # Assert distance between geometries is 0 when recreating from raw input
         # This method was used because the geometries themselves may be recorded differently but mean the same (after mapping on QGIS)
-        diff_df = db.dfquery("""
-        select distinct
-        st_distance(raw_inputs.geom, st_transform(st_setsrid(end_table.geom, 4326),2263))::int distance
+        diff_df = db.dfquery(f"""
+        select distinct st_distance(raw_inputs.geom, st_transform(st_setsrid(end_table.geom, 4326),2263))::int distance
         from (
             select 1 as id, st_setsrid(st_point(1015329.1, 213793.1), 2263) as geom
             union
             select 2 as id, st_setsrid(st_point(1015428.1, 213086.1), 2263) as geom
         ) raw_inputs
-        join {} end_table
-        on raw_inputs.id=end_table.gid::int
-        """.format(test_read_shp_table_name))
+        join {test_read_shp_table_name} end_table
+            on raw_inputs.id=end_table.gid::int
+        """)
 
         assert len(diff_df) == 1
         assert int(diff_df.iloc[0]['distance']) == 0
@@ -204,23 +202,23 @@ class TestReadShpMS:
         assert sql.table_exists(schema=ms_schema, table=test_read_shp_table_name)
 
         # todo: this fails because odbc 17 driver isnt supporting geometry
-        table_df = sql.dfquery('select * from {}.{}'.format(ms_schema, test_read_shp_table_name))
+        table_df = sql.dfquery(f'select * from {ms_schema}.{test_read_shp_table_name}')
 
         assert set(table_df.columns) == {'ogr_fid', 'gid', 'some_value', 'geom'}
         assert len(table_df) == 2
 
         # Assert distance between geometries is 0 when recreating from raw input
         # This method was used because the geometries themselves may be recorded differently but mean the same (after mapping on QGIS)
-        diff_df = sql.dfquery("""
+        diff_df = sql.dfquery(f"""
         select distinct raw_inputs.geom.STDistance(end_table.geom) as distance
         from (
             (select 1 as id, geometry::Point(1015329.1, 213793.1, 2263) as geom)
             union all
             (select 2 as id, geometry::Point(1015428.1, 213086.1, 2263) as geom)
         ) raw_inputs
-        join {}.{} end_table
-        on raw_inputs.id=end_table.gid
-        """.format(ms_schema, test_read_shp_table_name))
+        join {ms_schema}.{test_read_shp_table_name} end_table
+            on raw_inputs.id=end_table.gid
+        """)
 
         assert len(diff_df) == 1
         assert int(diff_df.iloc[0]['distance']) == 0
@@ -282,22 +280,22 @@ class TestReadShpMS:
 
         # Assert read_shp happened successfully and contents are correct
         assert sql.table_exists(schema=sql.default_schema, table=test_read_shp_table_name)
-        table_df = sql.dfquery('select * from {}'.format(test_read_shp_table_name))
+        table_df = sql.dfquery(f'select * from {test_read_shp_table_name}')
         assert set(table_df.columns) == {'ogr_fid', 'gid', 'some_value', 'geom'}
         assert len(table_df) == 2
 
         # Assert distance between geometries is 0 when recreating from raw input
         # This method was used because the geometries themselves may be recorded differently but mean the same (after mapping on QGIS)
-        diff_df = sql.dfquery("""
+        diff_df = sql.dfquery(f"""
         select distinct raw_inputs.geom.STDistance(end_table.geom) as distance
         from (
             (select 1 as id, geometry::Point(1015329.1, 213793.1, 2263) as geom)
             union all
             (select 2 as id, geometry::Point(1015428.1, 213086.1, 2263) as geom)
         ) raw_inputs
-        join {} end_table
-        on raw_inputs.id=end_table.gid::int
-        """.format(test_read_shp_table_name))
+        join {test_read_shp_table_name} end_table
+            on raw_inputs.id=end_table.gid::int
+        """)
 
         assert len(diff_df) == 1
         assert int(diff_df.iloc[0]['distance']) == 0
@@ -333,12 +331,11 @@ class TestWriteShpPG:
     def test_write_shp_table(self):
         db.query(f"""
         drop table if exists {pg_schema}.{test_write_shp_table_name};
-
         create table {pg_schema}.{test_write_shp_table_name} as
-        select *
-        from {pg_schema}.{pg_table_name}
-        order by id
-        limit 100
+                select *
+                from {pg_schema}.{pg_table_name}
+                order by id
+                limit 100
         """)
 
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -355,8 +352,8 @@ class TestWriteShpPG:
         db.shp_to_table(path=fp, shp_name=shp_name, schema=pg_schema, table=test_reuploaded_table_name, print_cmd=True)
 
         # Assert equality
-        db_df = db.dfquery("select * from {}.{} order by id limit 100".format(pg_schema, pg_table_name))
-        shp_uploaded_df = db.dfquery("select * from {}.{} order by id".format(pg_schema, test_reuploaded_table_name))
+        db_df = db.dfquery(f"select * from {pg_schema}.{pg_table_name} order by id limit 100")
+        shp_uploaded_df = db.dfquery(f"select * from {pg_schema}.{test_reuploaded_table_name} order by id")
 
         assert len(db_df) == len(shp_uploaded_df)
 
@@ -370,8 +367,8 @@ class TestWriteShpPG:
         dist_df = db.dfquery(f"""
         select distinct st_distance(st_setsrid(b.geom, 2263), a.geom) as distance
         from {pg_schema}.{pg_table_name} b
-        join {pg_schema}.{test_reuploaded_table_name} a
-        on b.id=a.id
+                join {pg_schema}.{test_reuploaded_table_name} a
+                on b.id=a.id
         """)
 
         assert len(dist_df) == 1
@@ -389,10 +386,10 @@ class TestWriteShpPG:
         db.drop_table(pg_schema, test_write_shp_table_name)
         db.query(f"""
         create table {pg_schema}.{test_write_shp_table_name} as
-        select *
-        from {pg_schema}.{pg_table_name}
-        order by id
-        limit 100
+                select *
+                from {pg_schema}.{pg_table_name}
+                order by id
+                limit 100
         """)
 
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -406,11 +403,11 @@ class TestWriteShpPG:
         assert os.path.isfile(os.path.join(fp, shp_name))
 
         # Reupload as table
-        db.shp_to_table(path=fp+'\\'+shp_name, schema=pg_schema, table=test_reuploaded_table_name, print_cmd=True)
+        db.shp_to_table(path=f'{fp}\\{shp_name}', schema=pg_schema, table=test_reuploaded_table_name, print_cmd=True)
 
         # Assert equality
-        db_df = db.dfquery("select * from {}.{} order by id limit 100".format(pg_schema, pg_table_name))
-        shp_uploaded_df = db.dfquery("select * from {}.{} order by id".format(pg_schema, test_reuploaded_table_name))
+        db_df = db.dfquery(f"select * from {pg_schema}.{pg_table_name} order by id limit 100")
+        shp_uploaded_df = db.dfquery(f"select * from {pg_schema}.{test_reuploaded_table_name} order by id")
 
         assert len(db_df) == len(shp_uploaded_df)
 
@@ -442,12 +439,11 @@ class TestWriteShpPG:
     def test_write_shp_table_pth_w_name(self):
         db.query(f"""
         drop table if exists {pg_schema}.{test_write_shp_table_name};
-
         create table {pg_schema}.{test_write_shp_table_name} as
         select *
-        from {pg_schema}.{pg_table_name}
-        order by id
-        limit 100
+                from {pg_schema}.{pg_table_name}
+                order by id
+                limit 100
         """)
 
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -461,12 +457,12 @@ class TestWriteShpPG:
         assert os.path.isfile(os.path.join(fp, shp_name))
 
         # Reupload as table
-        db.shp_to_table(path=fp+'\\'+'err_'+shp_name, shp_name=shp_name ,schema=pg_schema,
+        db.shp_to_table(path=f'{fp}\\err_{shp_name}', shp_name=shp_name ,schema=pg_schema,
                         table=test_reuploaded_table_name, print_cmd=True)
 
         # Assert equality
-        db_df = db.dfquery("select * from {}.{} order by id limit 100".format(pg_schema, pg_table_name))
-        shp_uploaded_df = db.dfquery("select * from {}.{} order by id".format(pg_schema, test_reuploaded_table_name))
+        db_df = db.dfquery(f"select * from {pg_schema}.{pg_table_name} order by id limit 100")
+        shp_uploaded_df = db.dfquery(f"select * from {pg_schema}.{test_reuploaded_table_name} order by id")
 
         assert len(db_df) == len(shp_uploaded_df)
 
@@ -480,8 +476,8 @@ class TestWriteShpPG:
         dist_df = db.dfquery(f"""
         select distinct st_distance(st_setsrid(b.geom, 2263), a.geom) as distance
         from {pg_schema}.{pg_table_name} b
-        join {pg_schema}.{test_reuploaded_table_name} a
-        on b.id=a.id
+                join {pg_schema}.{test_reuploaded_table_name} a
+                on b.id=a.id
         """)
 
         assert len(dist_df) == 1
@@ -501,7 +497,7 @@ class TestWriteShpPG:
 
         # Write shp
         s = Shapefile(dbo=db, path=fp, shp_name=shp_name,
-                      query="""select * from {}.{} order by id limit 100""".format(pg_schema, pg_table_name))
+                query=f"""select * from {pg_schema}.{pg_table_name} order by id limit 100""")
         s.write_shp(print_cmd=True)
 
         # Check table in folder
@@ -511,9 +507,8 @@ class TestWriteShpPG:
         db.shp_to_table(path=fp, shp_name=shp_name, schema=pg_schema, table=test_reuploaded_table_name, print_cmd=True)
 
         # Assert equality
-        db_df = db.dfquery("select * from {}.{} order by id limit 100".format(pg_schema, pg_table_name))
-        shp_uploaded_df = db.dfquery("select * from {}.{} order by id".format(pg_schema, test_reuploaded_table_name))
-
+        db_df = db.dfquery(f"select * from {pg_schema}.{pg_table_name} order by id limit 100")
+        shp_uploaded_df = db.dfquery(f"select * from {pg_schema}.{test_reuploaded_table_name} order by id")
         assert len(db_df) == len(shp_uploaded_df)
 
         # Some columns changed names since shpfiles have a character limit of 10
@@ -526,8 +521,8 @@ class TestWriteShpPG:
         dist_df = db.dfquery(f"""
         select distinct st_distance(st_setsrid(b.geom, 2263), a.geom) as distance
         from {pg_schema}.{pg_table_name} b
-        join {pg_schema}.{test_reuploaded_table_name} a
-        on b.id=a.id
+                join {pg_schema}.{test_reuploaded_table_name} a
+                on b.id=a.id
         """)
 
         assert len(dist_df) == 1
@@ -550,11 +545,11 @@ class TestWriteShpMS:
         sql.drop_table(schema=ms_schema, table=test_write_shp_table_name)
 
         # Add test_table
-        sql.query("""
-        create table {s}.{t} (test_col1 int, test_col2 int, geom geometry);
-        insert into {s}.{t} VALUES(1, 2, geometry::Point(985831.79200444, 203371.60461367, 2263));
-        insert into {s}.{t} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
-        """.format(s=ms_schema, t=test_write_shp_table_name))
+        sql.query(f"""
+                create table {ms_schema}.{test_write_shp_table_name} (test_col1 int, test_col2 int, geom geometry);
+                insert into {ms_schema}.{test_write_shp_table_name} VALUES(1, 2, geometry::Point(985831.79200444, 203371.60461367, 2263));
+                insert into {ms_schema}.{test_write_shp_table_name} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
+        """)
 
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))+'/test_data'
         shp_name = 'test_write.shp'
@@ -570,10 +565,8 @@ class TestWriteShpMS:
         sql.shp_to_table(path=fp, shp_name=shp_name, schema=ms_schema, table=test_reuploaded_table_name, print_cmd=True)
 
         # Assert equality
-        db_df = sql.dfquery("select top 10 * from {}.{} order by test_col1".format(ms_schema,
-                                                                                   test_write_shp_table_name))
-        shp_uploaded_df = sql.dfquery("select top 10 * from {}.{} order by test_col1".format(ms_schema,
-                                                                                             test_reuploaded_table_name))
+        db_df = sql.dfquery(f"select top 10 * from {ms_schema}.{test_write_shp_table_name} order by test_col1")
+        shp_uploaded_df = sql.dfquery(f"select top 10 * from {ms_schema}.{test_reuploaded_table_name} order by test_col1")
 
         assert len(db_df) == len(shp_uploaded_df)
 
@@ -584,12 +577,12 @@ class TestWriteShpMS:
                                       check_dtype=False)
 
         # Assert before/after geom columns are all 0 ft from each other, even if represented differently
-        dist_df = sql.dfquery("""
+        dist_df = sql.dfquery(f"""
         select distinct b.geom.STDistance(a.geom) as distance
-        from {s}.{t} b
-        join {s}.{t} a
-        on b.test_col1=a.test_col1
-        """.format(s=ms_schema, t=test_reuploaded_table_name))
+            from {ms_schema}.{test_write_shp_table_name} b
+            join {ms_schema}.{test_reuploaded_table_name} a
+            on b.test_col1=a.test_col1
+        """)
 
         assert len(dist_df) == 1
         assert dist_df.iloc[0]['distance'] == 0
@@ -609,9 +602,9 @@ class TestWriteShpMS:
 
         # Add test_table
         sql.query(f"""
-        create table {ms_schema}.{test_write_shp_table_name} (test_col1 int, test_col2 int, geom geometry);
-        insert into {ms_schema}.{test_write_shp_table_name} VALUES(1, 2, geometry::Point(985831.79200444, 203371.60461367, 2263));
-        insert into {ms_schema}.{test_write_shp_table_name} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
+                create table {ms_schema}.{test_write_shp_table_name} (test_col1 int, test_col2 int, geom geometry);
+                insert into {ms_schema}.{test_write_shp_table_name} VALUES(1, 2, geometry::Point(985831.79200444, 203371.60461367, 2263));
+                insert into {ms_schema}.{test_write_shp_table_name} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
         """)
 
         fp = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -626,13 +619,11 @@ class TestWriteShpMS:
         assert os.path.isfile(os.path.join(fp, shp_name))
 
         # Reupload as table
-        sql.shp_to_table(path=fp+'\\'+shp_name, schema=ms_schema, table=test_reuploaded_table_name, print_cmd=True)
+        sql.shp_to_table(path=f'{fp}\\{shp_name}', schema=ms_schema, table=test_reuploaded_table_name, print_cmd=True)
 
         # Assert equality
-        db_df = sql.dfquery("select top 10 * from {}.{} order by test_col1".format(ms_schema,
-                                                                                   test_write_shp_table_name))
-        shp_uploaded_df = sql.dfquery("select top 10 * from {}.{} order by test_col1".format(
-            ms_schema, test_reuploaded_table_name))
+        db_df = sql.dfquery(f"select top 10 * from {ms_schema}.{test_write_shp_table_name} order by test_col1")
+        shp_uploaded_df = sql.dfquery(f"select top 10 * from {ms_schema}.{test_reuploaded_table_name} order by test_col1")
 
         assert len(db_df) == len(shp_uploaded_df)
 
@@ -645,9 +636,9 @@ class TestWriteShpMS:
         # Assert before/after geom columns are all 0 ft from each other, even if represented differently
         dist_df = sql.dfquery(f"""
         select distinct b.geom.STDistance(a.geom) as distance
-        from {ms_schema}.{test_write_shp_table_name} b
-        join {ms_schema}.{test_reuploaded_table_name} a
-        on b.test_col1=a.test_col1
+                from {ms_schema}.{test_write_shp_table_name} b
+                join {ms_schema}.{test_reuploaded_table_name} a
+                on b.test_col1=a.test_col1
         """)
 
         assert len(dist_df) == 1
@@ -670,9 +661,9 @@ class TestWriteShpMS:
 
         # Add test_table
         sql.query(f"""
-        create table {ms_schema}.{test_write_shp_table_name} (test_col1 int, test_col2 int, geom geometry);
-        insert into {ms_schema}.{test_write_shp_table_name} VALUES(1, 2, geometry::Point(985831.79200444, 203371.60461367, 2263));
-        insert into {ms_schema}.{test_write_shp_table_name} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
+                create table {ms_schema}.{test_write_shp_table_name} (test_col1 int, test_col2 int, geom geometry);
+                insert into {ms_schema}.{test_write_shp_table_name} VALUES(1, 2, geometry::Point(985831.79200444, 203371.60461367, 2263));
+                insert into {ms_schema}.{test_write_shp_table_name} VALUES(3, 4, geometry::Point(985831.79200444, 203371.60461367, 2263));
         """)
 
         # Write shp
@@ -701,9 +692,9 @@ class TestWriteShpMS:
         # Assert before/after geom columns are all 0 ft from each other, even if represented differently
         dist_df = sql.dfquery(f"""
                 select distinct b.geom.STDistance(a.geom) as distance
-                from {ms_schema}.{test_write_shp_table_name} b
-                join {ms_schema}.{test_reuploaded_table_name} a
-                on b.test_col1=a.test_col1
+                        from {ms_schema}.{test_write_shp_table_name} b
+                        join {ms_schema}.{test_reuploaded_table_name} a
+                        on b.test_col1=a.test_col1
                 """)
 
         assert len(dist_df) == 1
