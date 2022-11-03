@@ -114,70 +114,70 @@ class TestQueryCreatesTablesSql:
 
 
 class TestQueryCreatesTablesPgSql():
-    def test_query_renames_table_from_qry(self, schema_name=pg_test_schema):
+    def test_query_renames_table_from_qry(self):
         query_string = f"""
-            ALTER TABLE {schema_name}.test_{db.user}
+            ALTER TABLE {dspg}.test_{db.user}
             RENAME TO node_{db.user}
         """
-        assert query.Query.query_renames_table(query_string, 'public') == {f'{schema_name}.node_{db.user}': f'test_{db.user}'}
+        assert query.Query.query_renames_table(query_string, 'public') == {f'{dspg}.node_{db.user}': f'test_{db.user}'}
 
-    def test_query_renames_table_from_qry_quotes(self, schema_name=pg_test_schema):
+    def test_query_renames_table_from_qry_quotes(self):
         query_string = f"""
-            ALTER TABLE "{schema_name}"."test_{db.user}"
+            ALTER TABLE "{dspg}"."test_{db.user}"
             RENAME TO "node_{db.user}"
         """
-        assert query.Query.query_renames_table(query_string, 'public') == {f'"{schema_name}"."node_{db.user}"': f'"test_{db.user}"'}
+        assert query.Query.query_renames_table(query_string, 'public') == {f'"{dspg}"."node_{db.user}"': f'"test_{db.user}"'}
 
-    def test_query_renames_table_from_qry_multiple(self, schema_name=pg_test_schema):
+    def test_query_renames_table_from_qry_multiple(self):
         query_string = f"""
-            ALTER TABLE "{schema_name}"."test_{db.user}"
+            ALTER TABLE "{dspg}"."test_{db.user}"
             RENAME TO "node_{db.user}";
 
-            CREATE TABLE {schema_name}.test_table_error_{db.user} as
+            CREATE TABLE {dspg}.test_table_error_{db.user} as
             SELECT * FROM node_{db.user};
 
-            ALTER TABLE {schema_name}.test2_{db.user}
+            ALTER TABLE {dspg}.test2_{db.user}
             RENAME TO node2_{db.user};
         """
-        assert query.Query.query_renames_table(query_string, 'public') == {f'"{schema_name}"."node_{db.user}"': f'"test_{db.user}"',
-                                                                               f'{schema_name}.node2_{db.user}': f'test2_{db.user}'}
+        assert query.Query.query_renames_table(query_string, 'public') == {f'"{dspg}"."node_{db.user}"': f'"test_{db.user}"',
+                                                                               f'{dspg}.node2_{db.user}': f'test2_{db.user}'}
 
-    def test_query_renames_table_from_qry_w_comments(self, schema_name=pg_test_schema):
+    def test_query_renames_table_from_qry_w_comments(self):
         query_string = f"""
-        -- ALTER TABLE {schema_name}.old1_{db.user} rename to new1_{db.user}
+        -- ALTER TABLE {dspg}.old1_{db.user} rename to new1_{db.user}
         /*  ALTER TABLE old2_{db.user} rename to new2_{db.user} */
         /*
-            ALTER TABLE {schema_name}.old3_{db.user} rename to new3_{db.user}
+            ALTER TABLE {dspg}.old3_{db.user} rename to new3_{db.user}
         */
-        ALTER TABLE {schema_name}.test_{db.user}
+        ALTER TABLE {dspg}.test_{db.user}
         RENAME TO node_{db.user}
         """
-        assert query.Query.query_renames_table(query_string, 'public') == {f'{schema_name}.node_{db.user}': f'test_{db.user}'}
+        assert query.Query.query_renames_table(query_string, 'public') == {f'{dspg}.node_{db.user}': f'test_{db.user}'}
 
 
-    def test_query_renames_table_logging_not_temp(self, schema_name=pg_test_schema):
-        db.drop_table(schema_name, f'___test___test___{db.user}')
-        assert not db.table_exists(f'___test___test___{db.user}', schema=schema_name)
-        db.query(f"create table {schema_name}.___test___test___{db.user} (id int);", temp=False)
-        assert db.table_exists(f'___test___test___{db.user}', schema=schema_name)
-        assert not db.check_table_in_log(f'___test___test___{db.user}', schema=schema_name)
+    def test_query_renames_table_logging_not_temp(self):
+        db.drop_table(dspg, f'___test___test___{db.user}')
+        assert not db.table_exists(f'___test___test___{db.user}', schema=dspg)
+        db.query(f"create table {dspg}.___test___test___{db.user} (id int);", temp=False)
+        assert db.table_exists(f'___test___test___{db.user}', schema=dspg)
+        assert not db.check_table_in_log(f'___test___test___{db.user}', schema=dspg)
 
-        db.drop_table(schema_name, f'___test___test___2___{db.user}')
-        db.query(f"alter table {schema_name}.___test___test___{db.user} rename to ___test___test___2___{db.user}")
-        assert db.table_exists(f'___test___test___2___{db.user}', schema=schema_name)
-        assert not db.check_table_in_log(f'___test___test___2___{db.user}', schema=schema_name)
-        db.drop_table(schema_name, f'___test___test___2___{db.user}')
+        db.drop_table(dspg, f'___test___test___2___{db.user}')
+        db.query(f"alter table {dspg}.___test___test___{db.user} rename to ___test___test___2___{db.user}")
+        assert db.table_exists(f'___test___test___2___{db.user}', schema=dspg)
+        assert not db.check_table_in_log(f'___test___test___2___{db.user}', schema=dspg)
+        db.drop_table(dspg, f'___test___test___2___{db.user}')
 
-    def test_query_renames_table_logging_temp(self, schema_name=pg_test_schema):
-        db.drop_table(schema_name, f'___test___test___{db.user}')
-        assert not db.table_exists(f'___test___test___{db.user}', schema=schema_name)
-        db.query(f"create table {schema_name}.___test___test___{db.user} (id int);", temp=True)
-        assert db.table_exists(f'___test___test___{db.user}', schema=schema_name)
-        assert db.check_table_in_log(f'___test___test___{db.user}', schema=schema_name)
+    def test_query_renames_table_logging_temp(self):
+        db.drop_table(dspg, f'___test___test___{db.user}')
+        assert not db.table_exists(f'___test___test___{db.user}', schema=dspg)
+        db.query(f"create table {dspg}.___test___test___{db.user} (id int);", temp=True)
+        assert db.table_exists(f'___test___test___{db.user}', schema=dspg)
+        assert db.check_table_in_log(f'___test___test___{db.user}', schema=dspg)
 
-        db.drop_table(schema_name, f'___test___test___2___{db.user}')
-        db.query(f"alter table {schema_name}.___test___test___{db.user} rename to ___test___test___2___{db.user} ")
-        assert db.table_exists(f'___test___test___2___{db.user}', schema=schema_name)
-        assert db.check_table_in_log(f'___test___test___2___{db.user}', schema=schema_name)
-        db.drop_table(schema_name, f'___test___test___2___{db.user}')
+        db.drop_table(dspg, f'___test___test___2___{db.user}')
+        db.query(f"alter table {dspg}.___test___test___{db.user} rename to ___test___test___2___{db.user} ")
+        assert db.table_exists(f'___test___test___2___{db.user}', schema=dspg)
+        assert db.check_table_in_log(f'___test___test___2___{db.user}', schema=dspg)
+        db.drop_table(dspg, f'___test___test___2___{db.user}')
 
