@@ -14,36 +14,42 @@ config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
 
 db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
                        server=config.get('PG_DB', 'SERVER'),
+                       port=int(config.get('PG_DB', 'DB_PORT')),
                        database=config.get('PG_DB', 'DB_NAME'),
                        user=config.get('PG_DB', 'DB_USER'),
-                       password=config.get('PG_DB', 'DB_PASSWORD'))
+                       password=config.get('PG_DB', 'DB_PASSWORD'),
+                       schema=config.get('PG_DB', 'DB_SCHEMA'))
 
 sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         server=config.get('SQL_DB', 'SERVER'),
                         database=config.get('SQL_DB', 'DB_NAME'),
                         user=config.get('SQL_DB', 'DB_USER'),
-                        password=config.get('SQL_DB', 'DB_PASSWORD'))
+                        password=config.get('SQL_DB', 'DB_PASSWORD'),
+                        schema=config.get('SQL_DB', 'DB_SCHEMA'))
 
 test_query_table = f'test_query_table_{db.user}'
 
+# Set schema for tests
+dsms = db.default_schema
+dspg = sql.default_schema
 
 class TestQuery:
     def test_query_returns_correct_pg(self):
-        db.drop_table(table=test_query_table, schema='working')
-        assert not db.table_exists(table=test_query_table, schema='working')
+        db.drop_table(table=test_query_table, schema=dspg)
+        assert not db.table_exists(table=test_query_table, schema=dspg)
 
         db.query(f"""
-            create table working.{test_query_table} (col1 varchar, col2 varchar, col3 varchar);
-            insert into working.{test_query_table} values ('a', 'b', 'c');
+            create table {dspg}.{test_query_table} (col1 varchar, col2 varchar, col3 varchar);
+            insert into {dspg}.{test_query_table} values ('a', 'b', 'c');
         """)
 
         # Assert query successfully executed create table
-        assert db.table_exists(table=test_query_table, schema='working')
+        assert db.table_exists(table=test_query_table, schema=dspg)
 
         # Assert correctly executed insert
         db.query(f"""
             select * 
-            from working.{test_query_table}
+            from {dspg}.{test_query_table}
         """)
 
         last_query = db.queries[-1]
@@ -56,22 +62,22 @@ class TestQuery:
         assert len(last_query.data_columns) == 3
 
         # Cleanup
-        db.drop_table(table=test_query_table, schema='working')
+        db.drop_table(table=test_query_table, schema=dspg)
 
     def test_query_returns_correct_ms(self):
-        sql.drop_table(table=test_query_table, schema='dbo')
-        assert not sql.table_exists(table=test_query_table, schema='dbo')
+        sql.drop_table(table=test_query_table, schema=dsms)
+        assert not sql.table_exists(table=test_query_table, schema=dsms)
 
         sql.query(f"""
-            create table dbo.{test_query_table} (col1 varchar, col2 varchar, col3 varchar);
-            insert into dbo.{test_query_table} values ('a', 'b', 'c');
+            create table {dsms}.{test_query_table} (col1 varchar, col2 varchar, col3 varchar);
+            insert into {dsms}.{test_query_table} values ('a', 'b', 'c');
         """)
 
         # Assert query successfully executed create table
-        assert sql.table_exists(table=test_query_table, schema='dbo')
+        assert sql.table_exists(table=test_query_table, schema=dsms)
 
         # Assert correctly executed insert
-        sql.query(f"select * from dbo.{test_query_table}")
+        sql.query(f"select * from {dsms}.{test_query_table}")
 
         last_query = sql.queries[-1]
 
@@ -86,7 +92,7 @@ class TestQuery:
         assert len(last_query.data_columns) == 3
 
         # Cleanup
-        sql.drop_table(table=test_query_table, schema='dbo')
+        sql.drop_table(table=test_query_table, schema=dsms)
 
     def test_successful_query_pg(self):
         """
@@ -97,12 +103,12 @@ class TestQuery:
         Here, we take a different approach, confirming that PostgreSql has received the query as intended
         through the built in pg_stat_activity.
         """
-        db.drop_table(table=test_query_table, schema='working')
-        assert not db.table_exists(table=test_query_table, schema='working')
+        db.drop_table(table=test_query_table, schema=dspg)
+        assert not db.table_exists(table=test_query_table, schema=dspg)
 
         create_insert_table_string = f"""
-            create table working.{test_query_table} (col1 varchar, col2 varchar, col3 varchar);
-            insert into working.{test_query_table} values ('a', 'b', 'c');
+            create table {dspg}.{test_query_table} (col1 varchar, col2 varchar, col3 varchar);
+            insert into {dspg}.{test_query_table} values ('a', 'b', 'c');
             select query 
                 from pg_stat_activity
                 where usename = '{db.user}' and query is not null and query != ''
@@ -117,9 +123,9 @@ class TestQuery:
                                      legitimate_query_results for q in r]
 
         assert create_insert_table_string in possibly_relevant_queries
-        assert db.table_exists(table=test_query_table, schema='working')
+        assert db.table_exists(table=test_query_table, schema=dspg)
 
-        db.drop_table(table=test_query_table, schema='working')
+        db.drop_table(table=test_query_table, schema=dspg)
 
     def test_successful_query_ms(self):
         # Unclear of logic right now
