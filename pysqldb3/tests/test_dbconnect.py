@@ -680,253 +680,253 @@ class TestLogging:
         """)) == 1
 
         # Cleanup
-        db.dfquery('DROP TABLE IF EXISTS working."{}"'.format(table_for_testing_logging.capitalize()))
+        db.dfquery(f'DROP TABLE IF EXISTS {ds}."{tftl_cap}"')
 
     def test_ms_capitals(self):
-        sql.drop_table(schema='dbo', table=table_for_testing_logging)
+        ds = sql.default_schema
+        sql.drop_table(schema=ds, table=table_for_testing_logging)
 
         # Assert no test table
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name='dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 0
+        WHERE s.name='{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 0
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Add test table (capitalized)
-        sql.query("""
-        create table dbo.{} (test_col1 int, test_col2 int);
-        insert into dbo.{} VALUES(1, 2);
-        insert into dbo.{} VALUES(3, 4);
-        """.format(table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize()))
+        sql.query(f"""
+        create table {ds}.{table_for_testing_logging.capitalize()} (test_col1 int, test_col2 int);
+        insert into {ds}.{table_for_testing_logging.capitalize()} VALUES(1, 2);
+        insert into {ds}.{table_for_testing_logging.capitalize()} VALUES(3, 4);
+        """)
 
         # Assert sql stores without capitalization
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name = 'dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 1
+        WHERE s.name = '{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 1
 
         # Assert log stores without capitaliztion
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 1
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Cleanup
-        sql.query('DROP TABLE dbo.{}'.format(table_for_testing_logging))
+        sql.query(f'DROP TABLE {ds}.{table_for_testing_logging}')
 
     def test_ms_quotes(self):
+        ds = sql.default_schema
         # Assert no test table
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name='dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 0
+        WHERE s.name='{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 0
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Add test table with quotes
-        sql.query("""
-        create table dbo."{}"(test_col1 int, test_col2 int);
-        insert into dbo."{}" VALUES(1, 2);
-        insert into dbo."{}" VALUES(3, 4);
-        """.format(table_for_testing_logging, table_for_testing_logging, table_for_testing_logging))
+        sql.query(f"""
+        create table {ds}."{table_for_testing_logging}"(test_col1 int, test_col2 int);
+        insert into {ds}."{table_for_testing_logging}" VALUES(1, 2);
+        insert into {ds}."{table_for_testing_logging}" VALUES(3, 4);
+        """)
 
         # Assert sql stores without quotes
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name = 'dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 1
+        WHERE s.name = '{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 1
 
         # Assert log stores without quotes
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 1
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Cleanup
-        sql.query('DROP TABLE dbo."{}"'.format(table_for_testing_logging))
+        sql.query(f'DROP TABLE {ds}."{table_for_testing_logging}"')
 
     def test_ms_brackets(self):
+        ds = sql.default_schema
         # Assert no test table
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name='dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 0
+        WHERE s.name='{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 0
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Add test table with brackets
-        sql.query("""
-        create table dbo.[{}](test_col1 int, test_col2 int);
-        insert into dbo.[{}] VALUES(1, 2);
-        insert into dbo.[{}] VALUES(3, 4);
-        """.format(table_for_testing_logging, table_for_testing_logging, table_for_testing_logging))
+        sql.query(f"""
+        create table {ds}.[{table_for_testing_logging}](test_col1 int, test_col2 int);
+        insert into {ds}.[{table_for_testing_logging}] VALUES(1, 2);
+        insert into {ds}.[{table_for_testing_logging}] VALUES(3, 4);
+        """)
 
         # Assert sql stores without brackets
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name = 'dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 1
+        WHERE s.name = '{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 1
 
         # Assert log stores without brackets
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 1
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Cleanup
-        sql.query('DROP TABLE dbo.[{}]'.format(table_for_testing_logging))
+        sql.query(f'DROP TABLE {ds}.[{table_for_testing_logging}]')
 
     def test_ms_brackets_caps(self):
+        ds = sql.default_schema
         # Assert no test table
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name='dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 0
+        WHERE s.name='{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 0
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Add test table in brackets, capitalized
-        sql.query("""
-        create table dbo.[{}](test_col1 int, test_col2 int);
-        insert into dbo.[{}] VALUES(1, 2);
-        insert into dbo.[{}] VALUES(3, 4);
-        """.format(table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize()))
+        sql.query(f"""
+        create table {ds}.[{table_for_testing_logging.capitalize()}] (test_col1 int, test_col2 int);
+        insert into {ds}.[{table_for_testing_logging.capitalize()}] VALUES(1, 2);
+        insert into {ds}.[{table_for_testing_logging.capitalize()}] VALUES(3, 4);
+        """)
 
         # Assert sql stores lowercase, without bracket
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name = 'dbo' and t.name = '{}'
-        """.format(table_for_testing_logging))) == 1
+        WHERE s.name = '{ds}' and t.name = '{table_for_testing_logging}'
+        """)) == 1
 
         # Assert log stores lowercase, without brackets
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(sql.user, table_for_testing_logging))) == 1
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Cleanup
-        sql.query('DROP TABLE dbo.[{}]'.format(table_for_testing_logging.capitalize()))
+        sql.query(f'DROP TABLE {ds}.[{table_for_testing_logging.capitalize()}]')
 
     def test_ms_quotes_brackets(self):
-        sql.drop_table(schema='dbo', table='["{}"]'.format(table_for_testing_logging))
+        ds = sql.default_schema
+        sql.drop_table(schema=ds, table=f'["{table_for_testing_logging}"]')
 
         # Assert no test table in quotes
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name='dbo' and t.name = '"{}"'
-        """.format(table_for_testing_logging))) == 0
+        WHERE s.name='{ds}' and t.name = '"{table_for_testing_logging}"'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='"{}"'
-        """.format(sql.user, table_for_testing_logging))) == 0
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='"{table_for_testing_logging}"'
+        """)) == 0
 
         # Add test table in quotes and brackets
-        sql.query("""
-        create table dbo.["{}"](test_col1 int, test_col2 int);
-        insert into dbo.["{}"] VALUES(1, 2);
-        insert into dbo.["{}"] VALUES(3, 4);
-        """.format(table_for_testing_logging, table_for_testing_logging, table_for_testing_logging))
+        sql.query(f"""
+        create table {ds}.["{table_for_testing_logging}"](test_col1 int, test_col2 int);
+        insert into {ds}.["{table_for_testing_logging}"] VALUES(1, 2);
+        insert into {ds}.["{table_for_testing_logging}"] VALUES(3, 4);
+        """)
 
         # Assert sql stores in quotes, no brackets
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name = 'dbo' and t.name = '"{}"'
-        """.format(table_for_testing_logging))) == 1
+        WHERE s.name = '{ds}' and t.name = '"{table_for_testing_logging}"'
+        """)) == 1
 
         # Assert log stores in quotes, no brackets
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='"{}"'
-        """.format(sql.user, table_for_testing_logging))) == 1
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='"{table_for_testing_logging}"'
+        """)) == 1
 
         # Cleanup
-        sql.query('DROP TABLE dbo.["{}"]'.format(table_for_testing_logging))
+        sql.query(f'DROP TABLE {ds}.["{table_for_testing_logging}"]')
 
     def test_ms_quotes_brackets_caps(self):
-        sql.drop_table(schema='dbo', table='["{}"]'.format(table_for_testing_logging))
+        ds = sql.default_schema
+        sql.drop_table(schema=ds, table=f'["{table_for_testing_logging}"]')
 
         # Assert no test table
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name='dbo' and t.name = '"{}"'
-        """.format(table_for_testing_logging))) == 0
+        WHERE s.name='{ds}' and t.name = '"{table_for_testing_logging}"'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='"{}"'
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='"{table_for_testing_logging}"'
         """.format(sql.user, table_for_testing_logging))) == 0
 
         # Add test table in brackets, quotes, and caps
-        sql.query("""
-        create table dbo.["{}"](test_col1 int, test_col2 int);
-        insert into dbo.["{}"] VALUES(1, 2);
-        insert into dbo.["{}"] VALUES(3, 4);
-        """.format(table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize()))
+        sql.query(f"""
+        create table {ds}.["{table_for_testing_logging.capitalize()}"](test_col1 int, test_col2 int);
+        insert into {ds}.["{table_for_testing_logging.capitalize()}"] VALUES(1, 2);
+        insert into {ds}.["{table_for_testing_logging.capitalize()}"] VALUES(3, 4);
+        """)
 
         # Assert sql stores in quotes, not capitalized
-        assert len(sql.dfquery("""
+        assert len(sql.dfquery(f"""
         SELECT *
         FROM sys.tables t
         JOIN sys.schemas s
         ON t.schema_id = s.schema_id
-        WHERE s.name = 'dbo' and t.name = '"{}"'
-        """.format(table_for_testing_logging))) == 1
+        WHERE s.name = '{ds}' and t.name = '"{table_for_testing_logging}"'
+        """)) == 1
 
         # Assert log stores in quotes, not capitalized
-        assert len(sql.dfquery("""
-        SELECT * FROM dbo.__temp_log_table_{}__ WHERE table_name='"{}"'
+        assert len(sql.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{sql.user}__ WHERE table_name='"{table_for_testing_logging}"'
         """.format(sql.user, table_for_testing_logging))) == 1
 
         # Cleanup
-        sql.query('DROP TABLE dbo.["{}"]'.format(table_for_testing_logging))
+        sql.query(f'DROP TABLE {ds}.["{table_for_testing_logging}"]')
 
     @classmethod
     def teardown_class(cls):
