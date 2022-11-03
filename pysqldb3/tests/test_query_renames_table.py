@@ -15,100 +15,102 @@ db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
                        database=config.get('PG_DB', 'DB_NAME'),
                        user=config.get('PG_DB', 'DB_USER'),
                        password=config.get('PG_DB', 'DB_PASSWORD'),
+                       schema=config.get('PG_DB','DB_SCHEMA')
                        )
 
 sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         server=config.get('SQL_DB', 'SERVER'),
                         database=config.get('SQL_DB', 'DB_NAME'),
                         user=config.get('SQL_DB', 'DB_USER'),
-                        password=config.get('SQL_DB', 'DB_PASSWORD'), ldap=True)
+                        password=config.get('SQL_DB', 'DB_PASSWORD'),
+                        schema=config.get('SQL_DB','DB_SCHEMA'),
+                        ldap=True)
 
-sql_test_schema = 'testing'
-pg_test_schema = 'working'
-
+dspg = db.default_schema
+dsms = sql.default_schema
 
 class TestQueryCreatesTablesSql:
-    def test_query_renames_table_from_qry(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry(self):
         query_string = f"""
-            EXEC sp_rename 'RISCRASHDATA.{schema_name}.test_{sql.user}', 'node_{sql.user}'
+            EXEC sp_rename 'RISCRASHDATA.{dsms}.test_{sql.user}', 'node_{sql.user}'
         """
-        assert query.Query.query_renames_table(query_string, schema_name) == {f'{schema_name}.node_{sql.user}': f'test_{sql.user}'}
+        assert query.Query.query_renames_table(query_string, dsms) == {f'{dsms}.node_{sql.user}': f'test_{sql.user}'}
 
-    def test_query_renames_table_from_qry_no_db(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry_no_db(self):
         query_string = f"""
-             EXEC sp_rename '{schema_name}.test_{sql.user}', 'node_{sql.user}'
+             EXEC sp_rename '{dsms}.test_{sql.user}', 'node_{sql.user}'
          """
-        assert query.Query.query_renames_table(query_string, schema_name) == {f'{schema_name}.node_{sql.user}': f'test_{sql.user}'}
+        assert query.Query.query_renames_table(query_string, dsms) == {f'{dsms}.node_{sql.user}': f'test_{sql.user}'}
 
-    def test_query_renames_table_from_qry_just_table(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry_just_table(self):
         query_string = f"""
              EXEC sp_rename 'test_{sql.user}', 'node_{sql.user}'
          """
-        assert query.Query.query_renames_table(query_string, schema_name) == {f'{schema_name}.node_{sql.user}': f'test_{sql.user}'}
+        assert query.Query.query_renames_table(query_string, dsms) == {f'{dsms}.node_{sql.user}': f'test_{sql.user}'}
 
-    def test_query_renames_table_from_qry_server(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry_server(self):
         query_string = f"""
-             EXEC sp_rename 'dotserver.RISCRASHDATA.{schema_name}.test_{sql.user}', 'node_{sql.user}'
+             EXEC sp_rename 'dotserver.RISCRASHDATA.{dsms}.test_{sql.user}', 'node_{sql.user}'
          """
-        assert query.Query.query_renames_table(query_string, schema_name) == {f'{schema_name}.node_{sql.user}': f'test_{sql.user}'}
+        assert query.Query.query_renames_table(query_string, dsms) == {f'{dsms}.node_{sql.user}': f'test_{sql.user}'}
 
-    def test_query_renames_table_from_qry_brackets(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry_brackets(self):
         query_string = f"""
-               EXEC sp_rename '[RISCRASHDATA].[{schema_name}].[test_{sql.user}]', '[node_{sql.user}]'
+               EXEC sp_rename '[RISCRASHDATA].[{dsms}].[test_{sql.user}]', '[node_{sql.user}]'
            """
-        assert query.Query.query_renames_table(query_string, schema_name) == {f'[{schema_name}].[node_{sql.user}]': f'[test_{sql.user}]'}
+        assert query.Query.query_renames_table(query_string, default_schema=dsms) == {f'[{dsms}].[node_{sql.user}]': f'[test_{sql.user}]'}
 
-    def test_query_renames_table_from_qry_multiple(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry_multiple(self):
 
         query_string = f"""
-            EXEC sp_rename 'RISCRASHDATA.{schema_name}.test3_{sql.user}', 'node0_{sql.user}'
+            EXEC sp_rename 'RISCRASHDATA.{dsms}.test3_{sql.user}', 'node0_{sql.user}'
 
             select *
-             into RISCRASHDATA.{schema_name}.test_{sql.user}
-            from RISCRASHDATA.{schema_name}.test0_{sql.user};
+             into RISCRASHDATA.{dsms}.test_{sql.user}
+            from RISCRASHDATA.{dsms}.test0_{sql.user};
 
-            EXEC sp_rename 'RISCRASHDATA.{schema_name}.test_{sql.user}', 'node_{sql.user}'
+            EXEC sp_rename 'RISCRASHDATA.{dsms}.test_{sql.user}', 'node_{sql.user}'
         """
 
-        assert query.Query.query_renames_table(query_string, default_schema=schema_name) == \
-        {f"{schema_name}.node_{sql.user}": f"test_{sql.user}", f"{schema_name}.node0_{sql.user}": f"test3_{sql.user}"}
+        assert query.Query.query_renames_table(query_string, default_schema=dsms) == \
+        {f"{dsms}.node_{sql.user}": f"test_{sql.user}", f"{dsms}.node0_{sql.user}": f"test3_{sql.user}"}
 
-    def test_query_renames_table_from_qry_w_comments(self, schema_name=sql_test_schema):
+    def test_query_renames_table_from_qry_w_comments(self):
         query_string = f"""
-        -- EXEC sp_rename 'RISCRASHDATA.{schema_name}.old1_{sql.user}', 'new1_{sql.user}'
-        /*  EXEC sp_rename 'RISCRASHDATA.{schema_name}.old2_{sql.user}', 'new2_{sql.user}' */
+        -- EXEC sp_rename 'RISCRASHDATA.{dsms}.old1_{sql.user}', 'new1_{sql.user}'
+        /*  EXEC sp_rename 'RISCRASHDATA.{dsms}.old2_{sql.user}', 'new2_{sql.user}' */
         /*
-            EXEC sp_rename 'RISCRASHDATA.{schema_name}.old3_{sql.user}', 'new3_{sql.user}'
+            EXEC sp_rename 'RISCRASHDATA.{dsms}.old3_{sql.user}', 'new3_{sql.user}'
         */
-            EXEC sp_rename 'RISCRASHDATA.{schema_name}.test_{sql.user}', 'node_{sql.user}'
+            EXEC sp_rename 'RISCRASHDATA.{dsms}.test_{sql.user}', 'node_{sql.user}'
         """
-        assert query.Query.query_renames_table(query_string, schema_name) == {f'{schema_name}.node_{sql.user}': f'test_{sql.user}'}
+        assert query.Query.query_renames_table(query_string, default_schema=dsms) == {f'{dsms}.node_{sql.user}': f'test_{sql.user}'}
 
-    def test_query_renames_table_logging_not_temp(self, schema_name=sql_test_schema):
-        sql.drop_table(schema_name,f'___test___test___{sql.user}___')
-        assert not db.table_exists(f'___test___test___{sql.user}___', schema=schema_name)
-        sql.query(f"create table {schema_name}.___test___test___{sql.user}___ (id int);", temp=False)
-        assert sql.table_exists(f'___test___test___{sql.user}___', schema=schema_name)
-        assert not sql.check_table_in_log(f'___test___test___{sql.user}___', schema=schema_name)
+    def test_query_renames_table_logging_not_temp(self):
+        sql.drop_table(dsms, f'___test___test___{sql.user}___')
+        assert not db.table_exists(f'___test___test___{sql.user}___', schema=dsms)
+        sql.query(f"create table {dsms}.___test___test___{sql.user}___ (id int);", temp=False)
+        assert sql.table_exists(f'___test___test___{sql.user}___', schema=dsms)
+        assert not sql.check_table_in_log(f'___test___test___{sql.user}___', schema=dsms)
 
-        sql.drop_table(schema_name, f'___test___test___2___{sql.user}___')
-        sql.query(f"EXEC sp_rename '{schema_name}.___test___test___{sql.user}___', '___test___test___2___{sql.user}___'")
-        assert sql.table_exists(f'___test___test___2___{sql.user}___', schema=schema_name)
-        assert not sql.check_table_in_log(f'___test___test___2___{sql.user}___', schema=schema_name)
-        sql.drop_table(schema_name, f'___test___test___2___{sql.user}___')
+        sql.drop_table(dsms, f'___test___test___2___{sql.user}___')
+        sql.query(f"EXEC sp_rename '{dsms}.___test___test___{sql.user}___', '___test___test___2___{sql.user}___'")
+        assert sql.table_exists(f'___test___test___2___{sql.user}___', schema=dsms)
+        assert not sql.check_table_in_log(f'___test___test___2___{sql.user}___', schema=dsms)
+        sql.drop_table(dsms, f'___test___test___2___{sql.user}___')
 
-    def test_query_renames_table_logging_temp(self, schema_name=sql_test_schema):
-        sql.drop_table(schema_name, f'___test___test___{sql.user}___')
-        assert not db.table_exists(f'___test___test___{sql.user}___', schema=schema_name)
-        sql.query(f"create table {schema_name}.___test___test___{sql.user}___ (id int);", temp=True)
-        assert sql.table_exists(f'___test___test___{sql.user}___', schema=schema_name)
-        assert sql.check_table_in_log(f'___test___test___{sql.user}___', schema=schema_name)
+    def test_query_renames_table_logging_temp(self):
+        sql.drop_table(dsms, f'___test___test___{sql.user}___')
+        assert not db.table_exists(f'___test___test___{sql.user}___', schema=dsms)
+        sql.query(f"create table {dsms}.___test___test___{sql.user}___ (id int);", temp=True)
+        assert sql.table_exists(f'___test___test___{sql.user}___', schema=dsms)
+        assert sql.check_table_in_log(f'___test___test___{sql.user}___', schema=dsms)
 
-        sql.drop_table(schema_name, f'___test___test___2___{sql.user}___')
-        sql.query(f"EXEC sp_rename '{schema_name}.___test___test___{sql.user}___', '___test___test___2___{sql.user}___'")
-        assert sql.table_exists(f'___test___test___2___{sql.user}___', schema=schema_name)
-        assert sql.check_table_in_log(f'___test___test___2___{sql.user}___', schema=schema_name)
-        sql.drop_table(schema_name, f'___test___test___2___{sql.user}___')
+        sql.drop_table(dsms, f'___test___test___2___{sql.user}___')
+        sql.query(f"EXEC sp_rename '{dsms}.___test___test___{sql.user}___', '___test___test___2___{sql.user}___'")
+        assert sql.table_exists(f'___test___test___2___{sql.user}___', schema=dsms)
+        assert sql.check_table_in_log(f'___test___test___2___{sql.user}___', schema=dsms)
+        sql.drop_table(dsms, f'___test___test___2___{sql.user}___')
 
 
 class TestQueryCreatesTablesPgSql():
