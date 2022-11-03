@@ -10,14 +10,18 @@ from .. import pysqldb3 as pysqldb
 test_config = configparser.ConfigParser()
 test_config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
 
-db = pysqldb.DbConnect(default=True, password=test_config.get('PG_DB', 'DB_PASSWORD'),
-                       user=test_config.get('PG_DB', 'DB_USER'))
+db = pysqldb.DbConnect(default=True,
+                       user=test_config.get('PG_DB', 'DB_USER'),
+                       password=test_config.get('PG_DB', 'DB_PASSWORD'),
+                       schema=test_config.get('PG_DB','DB_SCHEMA'))
 
 sql = pysqldb.DbConnect(type=test_config.get('SQL_DB', 'TYPE'),
                         server=test_config.get('SQL_DB', 'SERVER'),
                         database=test_config.get('SQL_DB', 'DB_NAME'),
                         user=test_config.get('SQL_DB', 'DB_USER'),
-                        password=test_config.get('SQL_DB', 'DB_PASSWORD'))
+                        password=test_config.get('SQL_DB', 'DB_PASSWORD'),
+                        schema=test_config.get('SQL_DB','DB_SCHEMA'),
+                        ldap=test_config.get('SQL_DB','USE_LDAP'))
 
 pg_table_name = 'pg_test_table_{}'.format(db.user)
 sql_table_name = 'sql_test_table_{}'.format(sql.user)
@@ -65,51 +69,53 @@ class TestMisc:
         assert set(schemas) == set(query_schema_df['schema_name'])
 
     def test_my_tables_pg_basic(self):
-        db.drop_table(schema='working', table=table_for_testing)
-        my_tables_df = db.my_tables(schema='working')
+        ds = db.default_schema
+        db.drop_table(schema=ds, table=table_for_testing)
+        my_tables_df = db.my_tables(schema=ds)
         number_of_my_tables = len(my_tables_df)
 
-        db.query('create table working.{} as select * from working.{} limit 10'.format(table_for_testing, pg_table_name))
+        db.query(f'create table {ds}.{table_for_testing} as select * from {ds}.{table_for_testing_logging} limit 10')
 
-        new_my_tables_df = db.my_tables(schema='working')
+        new_my_tables_df = db.my_tables(schema=ds)
         new_number_of_my_tables = len(new_my_tables_df)
 
         # Assert new table is in my tables
         assert number_of_my_tables == new_number_of_my_tables - 1
 
-        db.drop_table(table=table_for_testing, schema='working')
+        db.drop_table(table=table_for_testing, schema=ds)
 
     def test_my_tables_pg_multiple(self):
-        my_tables_df = db.my_tables(schema='working')
+        my_tables_df = db.my_tables(schema=db.default_schema)
         number_of_my_tables = len(my_tables_df)
         another_table_for_testing = table_for_testing + '2'
 
         db.query('create table working.{} as select * from working.{} limit 10'.format(table_for_testing, pg_table_name))
         db.query('create table working.{} as select * from working.{} limit 10'.format(another_table_for_testing, pg_table_name))
 
-        new_my_tables_df = db.my_tables(schema='working')
+        new_my_tables_df = db.my_tables(schema=db.default_schema)
         new_number_of_my_tables = len(new_my_tables_df)
 
         # Assert new table is in my tables
         assert number_of_my_tables == new_number_of_my_tables - 2
 
-        db.drop_table(table=table_for_testing, schema='working')
-        db.drop_table(table=another_table_for_testing, schema='working')
+        db.drop_table(table=table_for_testing, schema=db.default_schema)
+        db.drop_table(table=another_table_for_testing, schema=db.default_schema)
 
     def test_my_tables_pg_drop(self):
-        my_tables_df = db.my_tables(schema='working')
+        my_tables_df = db.my_tables(schema=db.default_schema)
         number_of_my_tables = len(my_tables_df)
+        ds = db.default_schema
 
-        db.query('create table working.{} as select * from working.{} limit 10'.format(table_for_testing, pg_table_name))
+        db.query(f'create table {ds}.{table_for_testing} as select * from {ds}.{pg_table_name} limit 10')
 
-        new_my_tables_df = db.my_tables(schema='working')
+        new_my_tables_df = db.my_tables(schema=ds)
         new_number_of_my_tables = len(new_my_tables_df)
 
         # Assert new table is in my tables
         assert number_of_my_tables == new_number_of_my_tables - 1
 
-        db.drop_table(table=table_for_testing, schema='working')
-        drop_my_tables_df = db.my_tables(schema='working')
+        db.drop_table(table=table_for_testing, schema=ds)
+        drop_my_tables_df = db.my_tables(schema=ds)
 
         drop_number_of_my_tables = len(drop_my_tables_df)
         assert drop_number_of_my_tables == number_of_my_tables
@@ -135,16 +141,17 @@ class TestMisc:
         # Public schema my tables (PG)
         my_tables_df = db.my_tables(schema='working')
         number_of_my_tables = len(my_tables_df)
+        ds = db.default_schema
 
-        db.query('create table working.{} as select * from working.{} limit 10'.format(table_for_testing, pg_table_name))
+        db.query(f'create table {ds}.{table_for_testing} as select * from {ds}.{pg_table_name} limit 10')
 
-        new_my_tables_df = db.my_tables(schema='working')
+        new_my_tables_df = db.my_tables(schema=ds)
         new_number_of_my_tables = len(new_my_tables_df)
 
         # Assert new table is in my tables
         assert number_of_my_tables == new_number_of_my_tables - 1
 
-        db.drop_table(table=table_for_testing, schema='working')
+        db.drop_table(table=table_for_testing, schema=ds)
 
     def test_my_tables_ms(self):
         # My_tables does not do anything for Sql Server - should return nothing and print an error statement
@@ -152,41 +159,40 @@ class TestMisc:
         assert returned is None
 
     def test_rename_column_pg(self):
-        db.query('create table working.{} as select * from working.{} limit 10'.format(table_for_testing, pg_table_name))
+        ds = db.default_schema
+        db.query(f'create table {ds}.{table_for_testing} as select * from {ds}.{pg_table_name} limit 10')
 
-        og_columns = list(db.dfquery('select * from working.{}'.format(table_for_testing)))
+        og_columns = list(db.dfquery(f'select * from {ds}.{table_for_testing}'))
         original_column = og_columns[0]
 
         # Rename columns
-        db.rename_column(schema='working', table=table_for_testing, old_column=original_column, new_column='new_col_name')
+        db.rename_column(schema=ds, table=table_for_testing, old_column=original_column, new_column='new_col_name')
 
         # Assert columns have changed accordingly
-        assert 'new_col_name' in set(db.dfquery('select * from working.{}'.format(table_for_testing)))
-        assert original_column not in set(db.dfquery('select * from working.{}'.format(table_for_testing)))
+        assert 'new_col_name' in set(db.dfquery(f'select * from {ds}.{table_for_testing}'))
+        assert original_column not in set(db.dfquery(f'select * from {ds}.{table_for_testing}'))
 
-        db.drop_table(table=table_for_testing, schema='working')
+        db.drop_table(table=table_for_testing, schema=ds)
 
     def test_rename_column_ms(self):
 
         # TODO: this is failing with geom column - seems to be an issue with ODBC driver and geom...???
+        ds = sql.default_schema
+        sql.drop_table(table=table_for_testing, schema=ds)
 
-        sql.drop_table(table=table_for_testing, schema='dbo')
+        sql.query(f'select top 10 test_col1, test_col2 into {ds}.{table_for_testing} from {ds}.{sql_table_name}')
 
-        sql.query('select top 10 test_col1, test_col2 into dbo.{} from {}.{}'.format(table_for_testing,
-                                                                                     sql.default_schema,
-                                                                                     sql_table_name))
-
-        og_columns = list(sql.dfquery('select test_col1, test_col2 from dbo.{}'.format(table_for_testing)))
+        og_columns = list(sql.dfquery(f'select test_col1, test_col2 from {ds}.{table_for_testing}'))
         original_column = og_columns[0]
 
         # Rename columns
-        sql.rename_column(schema='dbo', table=table_for_testing, old_column=original_column, new_column='new_col_name')
+        sql.rename_column(schema=ds, table=table_for_testing, old_column=original_column, new_column='new_col_name')
 
         # Assert columns hasve changed accordingly
-        assert 'new_col_name' in set(sql.dfquery('select * from dbo.{}'.format(table_for_testing)))
-        assert original_column not in set(sql.dfquery('select * from dbo.{}'.format(table_for_testing)))
+        assert 'new_col_name' in set(sql.dfquery(f'select * from {ds}.{table_for_testing}'))
+        assert original_column not in set(sql.dfquery(f'select * from {ds}.{table_for_testing}'))
 
-        sql.drop_table(table=table_for_testing, schema='dbo')
+        sql.drop_table(table=table_for_testing, schema=ds)
 
     @classmethod
     def teardown_class(cls):
