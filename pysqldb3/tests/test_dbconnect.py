@@ -85,21 +85,22 @@ class TestMisc:
         db.drop_table(table=table_for_testing, schema=ds)
 
     def test_my_tables_pg_multiple(self):
+        ds = db.default_schema
         my_tables_df = db.my_tables(schema=db.default_schema)
         number_of_my_tables = len(my_tables_df)
         another_table_for_testing = table_for_testing + '2'
 
-        db.query('create table working.{} as select * from working.{} limit 10'.format(table_for_testing, pg_table_name))
-        db.query('create table working.{} as select * from working.{} limit 10'.format(another_table_for_testing, pg_table_name))
+        db.query(f'create table {ds}.{table_for_testing} as select * from {ds}.{pg_table_name} limit 10')
+        db.query(f'create table {ds}.{another_table_for_testing} as select * from {ds}.{pg_table_name} limit 10')
 
-        new_my_tables_df = db.my_tables(schema=db.default_schema)
+        new_my_tables_df = db.my_tables(schema=ds)
         new_number_of_my_tables = len(new_my_tables_df)
 
         # Assert new table is in my tables
         assert number_of_my_tables == new_number_of_my_tables - 2
 
-        db.drop_table(table=table_for_testing, schema=db.default_schema)
-        db.drop_table(table=another_table_for_testing, schema=db.default_schema)
+        db.drop_table(table=table_for_testing, schema=ds)
+        db.drop_table(table=another_table_for_testing, schema=ds)
 
     def test_my_tables_pg_drop(self):
         my_tables_df = db.my_tables(schema=db.default_schema)
@@ -208,17 +209,17 @@ class TestCheckLog:
 
     def test_check_log_pg(self):
         logs_df = db.check_logs()
-        query_df = db.dfquery("select * from {}.{}".format(db.default_schema, db.log_table))
+        query_df = db.dfquery(f"select * from {db.default_schema}.{db.log_table}")
         pd.testing.assert_frame_equal(logs_df, query_df)
 
     def test_check_log_ms(self):
         logs_df = sql.check_logs()
-        query_df = sql.dfquery("select * from {}.{}".format(sql.default_schema, sql.log_table))
+        query_df = sql.dfquery(f"select * from {sql.default_schema}.{sql.log_table}")
         pd.testing.assert_frame_equal(logs_df, query_df)
 
     def test_check_log_pg_working(self):
         logs_df = db.check_logs(schema='working')
-        query_df = db.dfquery("select * from {}.{}".format('working', db.log_table))
+        query_df = db.dfquery(f"select * from working.{db.log_table}")
 
         pd.testing.assert_frame_equal(logs_df, query_df)
 
@@ -234,34 +235,35 @@ class TestLogging:
         helpers.set_up_test_table_pg(db)
 
     def test_query_temp_logging(self):
-        db.query("""
-            DROP TABLE IF EXISTS working.{};
-            CREATE TABLE working.{} as
+        ds = db.default_schema
+        db.query(f"""
+            DROP TABLE IF EXISTS {ds}.{table_for_testing_logging};
+            CREATE TABLE {ds}.{table_for_testing_logging} as
             SELECT *
-            FROM working.{}
+            FROM {ds}.{pg_table_name}
             LIMIT 10
-        """.format(table_for_testing_logging, table_for_testing_logging, pg_table_name))
+        """)
 
-        assert db.table_exists(table=table_for_testing_logging, schema='working')
+        assert db.table_exists(table=table_for_testing_logging, schema=ds)
 
-        before_log_df = db.dfquery("""
+        before_log_df = db.dfquery(f"""
             SELECT *
-            FROM working.__temp_log_table_{}__
-            where table_name='{}'
-        """.format(db.user, table_for_testing_logging))
+            FROM {ds}.__temp_log_table_{db.user}__
+            where table_name='{table_for_testing_logging}'
+        """)
 
         before_drop_working_log_length = len(before_log_df)
         assert before_drop_working_log_length == 1
 
-        db.query("""
-        DROP TABLE IF EXISTS working.{};
-        """.format(table_for_testing_logging))
+        db.query(f"""
+        DROP TABLE IF EXISTS {ds}.{table_for_testing_logging};
+        """)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
             SELECT *
-            FROM working.__temp_log_table_{}__
-            where table_name='{}'
-        """.format(db.user, table_for_testing_logging))
+            FROM {ds}.__temp_log_table_{db.user}__
+            where table_name='{table_for_testing_logging}'
+        """)
 
         after_drop_working_log_length = len(after_log_df)
         assert after_drop_working_log_length == 0
@@ -270,79 +272,84 @@ class TestLogging:
         return
 
     def test_drop_table_logging(self):
-        db.query("""
-                    DROP TABLE IF EXISTS working.{};
-                    CREATE TABLE working.{} as
+        ds = db.default_schema
+        db.query(f"""
+                    DROP TABLE IF EXISTS {ds}.{table_for_testing_logging};
+                    CREATE TABLE {ds}.{table_for_testing_logging} as
                     SELECT *
-                    FROM working.{}
+                    FROM {ds}.{pg_table_name}
                     LIMIT 10
-        """.format(table_for_testing_logging, table_for_testing_logging, pg_table_name))
+        """)
 
-        assert db.table_exists(table=table_for_testing_logging, schema='working')
+        assert db.table_exists(table=table_for_testing_logging, schema=ds)
 
-        before_log_df = db.dfquery("""
+        before_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         before_drop_working_log_length = len(before_log_df)
 
         assert before_drop_working_log_length == 1
 
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         after_drop_working_log_length = len(after_log_df)
         assert after_drop_working_log_length == 0
 
     def test_correct_logging_expiration_deletion(self):
-        db.query("""
-            drop table if exists working.{};
-            create table working.{} as
+        ds = db.default_schema
+        db.query(f"""
+            drop table if exists {ds}.{table_for_testing_logging};
+            create table {ds}.{table_for_testing_logging} as
 
-            select * from working.{}
+            select * from {ds}.{pg_table_name}
             limit 1
-        """.format(table_for_testing_logging, table_for_testing_logging, pg_table_name))
+        """)
 
-        initial_exp_date = list(db.dfquery("""
+        initial_exp_date = list(db.dfquery(f"""
             SELECT expires
-            FROM working.__temp_log_table_{}__
-            WHERE table_name='{}';
-        """.format(db.user, table_for_testing_logging))['expires'])[0]
+            FROM {ds}.__temp_log_table_{db.user}__
+            WHERE table_name='{table_for_testing_logging}';
+        """)['expires'])[0]
 
         assert initial_exp_date == (datetime.datetime.now().date() + datetime.timedelta(7))
 
-        db.query("""
-        UPDATE working.__temp_log_table_{}__
+        db.query(f"""
+        UPDATE {ds}.__temp_log_table_{db.user}__
         SET expires=now()::date - interval '1 day'
-        WHERE table_name='{}';
-        """.format(db.user, table_for_testing_logging))
+        WHERE table_name='{table_for_testing_logging}';
+        """)
 
-        updated_exp_date = list(db.dfquery("""
+        updated_exp_date = list(db.dfquery(f"""
         SELECT expires
-        FROM working.__temp_log_table_{}__
-        WHERE table_name='{}';
-        """.format(db.user, table_for_testing_logging))['expires'])[0]
+        FROM {ds}.__temp_log_table_{db.user}__
+        WHERE table_name='{table_for_testing_logging}';
+        """)['expires'])[0]
 
         assert updated_exp_date == (datetime.datetime.now().date() - datetime.timedelta(1))
 
         reconnect_db = pysqldb.DbConnect(type=db.type,
                                          server=db.server,
+                                         port=db.port,
                                          database=db.database,
                                          user=db.user,
-                                         password=db.password)
+                                         password=db.password,
+                                         schema=db.default_schema,
+                                         ldap=db.LDAP)
 
-        new_log_tbl_df = reconnect_db.dfquery("""
+        new_log_tbl_df = reconnect_db.dfquery(f"""
         SELECT expires
-        FROM working.__temp_log_table_{}__
-        WHERE table_name='{}';
-        """.format(db.user, table_for_testing_logging))
+        FROM {ds}.__temp_log_table_{db.user}__
+        WHERE table_name='{table_for_testing_logging}';
+        """)
 
         assert len(new_log_tbl_df) == 0
 
