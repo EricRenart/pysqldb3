@@ -354,49 +354,51 @@ class TestLogging:
         assert len(new_log_tbl_df) == 0
 
     def test_custom_logging_expiration_date(self):
-        db.query("""
-            drop table if exists working.{};
-            create table working.{} as
+        ds = db.default_schema
+        db.query(f"""
+            drop table if exists {ds}.{table_for_testing_logging};
+            create table {ds}.{table_for_testing_logging} as
 
-            select * from working.{}
+            select * from {ds}.{pg_table_name}
             limit 1
-        """.format(table_for_testing_logging, table_for_testing_logging, pg_table_name), days=10)
+        """, days=10)
 
-        initial_exp_date = list(db.dfquery("""
+        initial_exp_date = list(db.dfquery(f"""
             SELECT expires
-            FROM working.__temp_log_table_{}__
-            WHERE table_name='{}';
-        """.format(db.user, table_for_testing_logging))['expires'])[0]
+            FROM {ds}.__temp_log_table_{db.user}__
+            WHERE table_name='{table_for_testing_logging}';
+        """)['expires'])[0]
 
         assert initial_exp_date == (datetime.datetime.now().date() + datetime.timedelta(10))
-        db.drop_table(schema='working', table=table_for_testing_logging)
+        db.drop_table(schema=ds, table=table_for_testing_logging)
 
     def test_custom_logging_expiration_date_2(self):
-        db.query("""
-            drop table if exists working.{};
-            create table working.{} as
+        ds = db.default_schema
+        db.query(f"""
+            drop table if exists {ds}.{table_for_testing_logging};
+            create table {ds}.{table_for_testing_logging} as
 
-            select * from working.{}
+            select * from {ds}.{pg_table_name}
             limit 1
-        """.format(table_for_testing_logging, table_for_testing_logging, pg_table_name), days=1)
+        """, days=1)
 
-        initial_exp_date = list(db.dfquery("""
+        initial_exp_date = list(db.dfquery(f"""
             SELECT expires
-            FROM working.__temp_log_table_{}__
-            WHERE table_name='{}';
-        """.format(db.user, table_for_testing_logging))['expires'])[0]
+            FROM {ds}.__temp_log_table_{db.user}__
+            WHERE table_name='{table_for_testing_logging}';
+        """)['expires'])[0]
 
         assert initial_exp_date == (datetime.datetime.now().date() + datetime.timedelta(1))
-        db.drop_table(schema='working', table=table_for_testing_logging)
+        db.drop_table(schema=ds, table=table_for_testing_logging)
 
     def test_csv_to_table_logging(self):
         fp = os.path.dirname(os.path.abspath(__file__)) + '/test_data/test_csv.csv'
-
-        before_log_df = db.dfquery("""
+        ds = db.default_schema
+        before_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         before_drop_working_log_length = len(before_log_df)
 
@@ -404,112 +406,115 @@ class TestLogging:
 
         df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
         df.to_csv(fp)
-        db.csv_to_table(input_file=fp, schema='working', table=table_for_testing_logging)
+        db.csv_to_table(input_file=fp, schema=ds, table=table_for_testing_logging)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         after_drop_working_log_length = len(after_log_df)
         assert after_drop_working_log_length == 1
 
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
 
     def test_excel_to_table_logging(self):
         helpers.set_up_xls()
 
         fp = os.path.dirname(os.path.abspath(__file__)) + '/test_data/test_xls.xls'
-
-        before_log_df = db.dfquery("""
+        ds = db.default_schema
+        before_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         before_drop_working_log_length = len(before_log_df)
         assert before_drop_working_log_length == 0
 
         df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
         df.to_excel(fp)
-        db.xls_to_table(input_file=fp, schema='working', table=table_for_testing_logging)
+        db.xls_to_table(input_file=fp, schema=ds, table=table_for_testing_logging)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         after_drop_working_log_length = len(after_log_df)
         assert after_drop_working_log_length == 1
 
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
 
     def test_dataframe_to_table_logging(self):
-        before_log_df = db.dfquery("""
+        ds = db.default_schema
+        before_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         before_drop_working_log_length = len(before_log_df)
         assert before_drop_working_log_length == 0
 
         df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-        db.dataframe_to_table(df=df, schema='working', table=table_for_testing_logging)
+        db.dataframe_to_table(df=df, schema=ds, table=table_for_testing_logging)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         after_drop_working_log_length = len(after_log_df)
         assert after_drop_working_log_length == 1
 
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
 
     def test_shp_to_table_logging(self):
+        ds = db.default_schema
         helpers.set_up_shapefile()
 
-        before_log_df = db.dfquery("""
+        before_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         before_log_length = len(before_log_df)
         assert before_log_length == 0
         # make sure table doesnt exists
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
         # import table
         db.shp_to_table(path=os.path.join(os.path.dirname(os.path.abspath(__file__)))+'\\test_data',
                         shp_name='test.shp',
-                        schema='working',
+                        schema=ds,
                         table=table_for_testing_logging)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         after_log_length = len(after_log_df)
         assert after_log_length == 1
 
         # Cleanup
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
         helpers.clean_up_shapefile()
 
     def test_bulk_csv_to_table_logging(self):
+        ds = db.default_schema
         fp = os.path.dirname(os.path.abspath(__file__)) + '/test_data/test_bulk.csv'
-        db.drop_table('working', table_for_testing_logging)
-        before_log_df = db.dfquery("""
+        db.drop_table(ds, table_for_testing_logging)
+        before_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         before_drop_working_log_length = len(before_log_df)
         assert before_drop_working_log_length == 0
@@ -518,162 +523,161 @@ class TestLogging:
         df.to_csv(fp)
 
         input_schema = db.dataframe_to_table_schema(df, table=table_for_testing_logging,
-                                                    schema='working', temp=True, overwrite=True)
+                                                    schema=ds, temp=True, overwrite=True)
 
-        db._bulk_csv_to_table(input_file=fp, schema='working', table=table_for_testing_logging,
+        db._bulk_csv_to_table(input_file=fp, schema=ds, table=table_for_testing_logging,
                               table_schema=input_schema)
 
-        after_log_df = db.dfquery("""
+        after_log_df = db.dfquery(f"""
                     SELECT *
-                    FROM working.__temp_log_table_{}__
-                    where table_name='{}'
-                """.format(db.user, table_for_testing_logging))
+                    FROM {ds}.__temp_log_table_{db.user}__
+                    where table_name='{table_for_testing_logging}'
+                """)
 
         after_drop_working_log_length = len(after_log_df)
         assert after_drop_working_log_length == 1
 
-        db.drop_table(table=table_for_testing_logging, schema='working')
+        db.drop_table(table=table_for_testing_logging, schema=ds)
 
     def test_table_to_csv_check_file_quote_name(self):
-        schema = 'working'
+        ds = db.default_schema
         fldr = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
 
         # Create table
-        db.query("""
-            DROP TABLE IF EXISTS  "{s}"."{t}";
+        db.query(f"""
+            DROP TABLE IF EXISTS "{ds}"."{table_for_testing_logging}";
             CREATE TABLE
-                    "{s}"."{t}"
+                    "{ds}"."{table_for_testing_logging}"
             AS SELECT
                 id, test_col1, test_col2, geom
             FROM
-                working.{pg}
+                {ds}.{pg_table_name}
             LIMIT 10
-        """.format(s=schema, t=table_for_testing_logging, pg=pg_table_name))
-        assert db.table_exists(table_for_testing_logging, schema=schema)
+        """)
+        assert db.table_exists(table_for_testing_logging, schema=ds)
 
         # table to csv
         db.table_to_csv(table_for_testing_logging,
-                        schema=schema,
+                        schema=ds,
                         output_file=os.path.join(fldr, table_for_testing_logging + '.csv'))
 
         # check table in folder
         assert os.path.isfile(os.path.join(fldr, table_for_testing_logging + '.csv'))
 
         # clean up
-        db.drop_table(schema, table_for_testing_logging)
+        db.drop_table(ds, table_for_testing_logging)
         os.remove(os.path.join(fldr, table_for_testing_logging + '.csv'))
 
     def test_pg_capitals(self):
+        ds = db.default_schema
         # Assert no test table
-        assert len(db.dfquery("""
-        DROP TABLE IF EXISTS {};
-        DROP TABLE IF EXISTS working.{};
+        assert len(db.dfquery(f"""
+        DROP TABLE IF EXISTS {table_for_testing_logging.capitalize()};
+        DROP TABLE IF EXISTS {ds}.{table_for_testing_logging.capitalize()};
 
         SELECT table_schema, table_name
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE table_name='{}'
-        """.format(table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize(),
-                   table_for_testing_logging))) == 0
+        WHERE table_name='{table_for_testing_logging}""")) == 0
 
         # Assert doesn't exist in log either
-        assert len(db.dfquery("""
-        SELECT * FROM working.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(db.user, table_for_testing_logging))) == 0
+        assert len(db.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{db.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Add capitalized test table
-        db.query("""
-        create table working.{} as
+        db.query(f"""
+        create table {ds}.{table_for_testing_logging.capitalize()} as
         select *
-        from working.{}
+        from {ds}.{pg_table_name}
         limit 10
-        """.format(table_for_testing_logging.capitalize(), pg_table_name))
+        """)
 
         # Assert pg stores as non-capitalized
-        assert len(db.dfquery("""
-        SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_name='{}'
-        """.format(table_for_testing_logging))) == 1
+        assert len(db.dfquery(f"""
+        SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Assert log stores as non-capitalized
-        assert len(db.dfquery("""
-        SELECT * FROM working.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(db.user, table_for_testing_logging))) == 1
+        assert len(db.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{db.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Cleanup
-        db.drop_table(schema='working', table=table_for_testing_logging)
+        db.drop_table(schema=ds, table=table_for_testing_logging)
 
     def test_pg_quotes_no_capitals(self):
+        ds = db.default_schema
         # Assert no table test_table
-        assert len(db.dfquery("""
-        DROP TABLE IF EXISTS {};
-        DROP TABLE IF EXISTS working.{};
+        assert len(db.dfquery(f"""
+        DROP TABLE IF EXISTS {table_for_testing_logging};
+        DROP TABLE IF EXISTS {ds}.{table_for_testing_logging};
 
         SELECT table_schema, table_name
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE table_name='{}'
-        """.format(table_for_testing_logging, table_for_testing_logging, table_for_testing_logging))) == 0
+        WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Assert doesn't exist in log either
-        assert len(db.dfquery("""
-        SELECT * FROM working.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(db.user, table_for_testing_logging))) == 0
+        assert len(db.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{db.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 0
 
         # Add table in (quotes)
-        db.query("""
-        create table working."{}" as
+        db.query(f"""
+        create table {ds}."{table_for_testing_logging}" as
         select *
-        from working.{}
+        from {ds}.{pg_table_name}
         limit 10
-        """.format(table_for_testing_logging, pg_table_name))
+        """)
 
         # Assert pg stores without quotes
-        assert len(db.dfquery("""
-        SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_name='{}'
-        """.format(table_for_testing_logging))) == 1
+        assert len(db.dfquery(f"""
+        SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Assert log stores without quotes
-        assert len(db.dfquery("""
-        SELECT * FROM working.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(db.user, table_for_testing_logging))) == 1
+        assert len(db.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{db.user}__ WHERE table_name='{table_for_testing_logging}'
+        """)) == 1
 
         # Cleanup
-        db.query("DROP TABLE IF EXISTS working.{}".format(table_for_testing_logging))
+        db.query(f"DROP TABLE IF EXISTS {ds}.{table_for_testing_logging}")
 
     def test_pg_quotes_with_capital(self):
+        ds = db.default_schema
         # Assert no test table
-        assert len(db.dfquery("""
-        DROP TABLE IF EXISTS "{}";
-        DROP TABLE IF EXISTS working."{}";
+        tftl_cap = table_for_testing_logging.capitalize()
+        assert len(db.dfquery(f"""
+        DROP TABLE IF EXISTS "{tftl_cap}";
+        DROP TABLE IF EXISTS {ds}."{tftl_cap}";
 
         SELECT table_schema, table_name
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE table_name='{}'
-        """.format(table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize(),
-                   table_for_testing_logging.capitalize()))) == 0
+        WHERE table_name='{tftl_cap}'
+        """))
 
         # Assert doesn't exist in log either
-        assert len(db.dfquery("""
-        SELECT * FROM working.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(db.user, table_for_testing_logging.capitalize()))) == 0
+        assert len(db.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{db.user}__ WHERE table_name='{tftl_cap}'
+        """)) == 0
 
         # Add capitalized test table (in quotes)
-        db.query("""
-        create table working."{}" as
+        db.query(f"""
+        create table {ds}."{tftl_cap}" as
         select *
-        from working.{}
+        from {ds}.{pg_table_name}
         limit 10
-        """.format(table_for_testing_logging.capitalize(), pg_table_name))
+        """)
 
         # Assert pg stores with capitalization
-        assert len(db.dfquery("""
-        SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_name='{}'
-        """.format(table_for_testing_logging.capitalize()))) == 1
+        assert len(db.dfquery(f"""
+        SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE table_name='{tftl_cap}'
+        """)) == 1
 
         # Assert log stores with capitalization
-        assert len(db.dfquery("""
-        SELECT * FROM working.__temp_log_table_{}__ WHERE table_name='{}'
-        """.format(db.user, table_for_testing_logging.capitalize()))) == 1
+        assert len(db.dfquery(f"""
+        SELECT * FROM {ds}.__temp_log_table_{db.user}__ WHERE table_name='{tftl_cap}'
+        """)) == 1
 
         # Cleanup
         db.dfquery('DROP TABLE IF EXISTS working."{}"'.format(table_for_testing_logging.capitalize()))
