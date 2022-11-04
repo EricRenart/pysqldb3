@@ -22,7 +22,7 @@ db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
 
 ris_db = pysqldb.DbConnect(type=config.get('SECOND_PG_DB', 'TYPE'),
                            server=config.get('SECOND_PG_DB', 'SERVER'),
-                           port=int(config.get('PG_DB', 'PORT')),
+                           port=int(config.get('SECOND_PG_DB', 'PORT')),
                            database=config.get('SECOND_PG_DB', 'DB_NAME'),
                            user=config.get('SECOND_PG_DB', 'DB_USER'),
                            password=config.get('SECOND_PG_DB', 'DB_PASSWORD'),
