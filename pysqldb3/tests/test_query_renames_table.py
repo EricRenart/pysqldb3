@@ -21,10 +21,12 @@ sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         user=config.get('SQL_DB', 'DB_USER'),
                         password=config.get('SQL_DB', 'DB_PASSWORD'), ldap=True)
 
-sql_test_schema = 'testing'
-pg_test_schema = 'working'
 
-class TestQueryCreatesTablesSql():
+sql_test_schema = config.get('SQL_DB', 'WORKING_SCHEMA')
+pg_test_schema = config.get('PG_DB', 'WORKING_SCHEMA')
+
+
+class TestQueryCreatesTablesSql:
     def test_query_renames_table_from_qry(self, schema_name=sql_test_schema):
         query_string = f"""
             EXEC sp_rename 'RISCRASHDATA.{schema_name}.test_{sql.user}', 'node_{sql.user}'
