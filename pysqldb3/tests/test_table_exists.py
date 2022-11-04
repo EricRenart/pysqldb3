@@ -9,6 +9,7 @@ config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
 
 db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
                        server=config.get('PG_DB', 'SERVER'),
+                       port=int(config.get('PG_DB', 'PORT')),
                        database=config.get('PG_DB', 'DB_NAME'),
                        user=config.get('PG_DB', 'DB_USER'),
                        password=config.get('PG_DB', 'DB_PASSWORD'),
@@ -16,6 +17,7 @@ db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
 
 ris_db = pysqldb.DbConnect(type=config.get('SECOND_PG_DB', 'TYPE'),
                            server=config.get('SECOND_PG_DB', 'SERVER'),
+                           port=int(config.get('PG_DB', 'PORT')),
                            database=config.get('SECOND_PG_DB', 'DB_NAME'),
                            user=config.get('SECOND_PG_DB', 'DB_USER'),
                            password=config.get('SECOND_PG_DB', 'DB_PASSWORD'),

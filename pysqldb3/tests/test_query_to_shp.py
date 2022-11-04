@@ -13,6 +13,7 @@ config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
 db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
                        server=config.get('PG_DB', 'SERVER'),
                        database=config.get('PG_DB', 'DB_NAME'),
+                       port=int(config.get('PG_DB', 'PORT')),
                        user=config.get('PG_DB', 'DB_USER'),
                        password=config.get('PG_DB', 'DB_PASSWORD'),
                        allow_temp_tables=True

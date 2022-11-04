@@ -11,7 +11,8 @@ test_config = configparser.ConfigParser()
 test_config.read(os.path.dirname(os.path.abspath(__file__)) + "\\db_config.cfg")
 
 db = pysqldb.DbConnect(default=True, password=test_config.get('PG_DB', 'DB_PASSWORD'),
-                       user=test_config.get('PG_DB', 'DB_USER'))
+                       user=test_config.get('PG_DB', 'DB_USER'),
+                       port=int(test_config.get('PG_DB', 'PORT')),)
 
 sql = pysqldb.DbConnect(type=test_config.get('SQL_DB', 'TYPE'),
                         server=test_config.get('SQL_DB', 'SERVER'),
