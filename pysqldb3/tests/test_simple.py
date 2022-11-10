@@ -16,18 +16,15 @@ db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
 sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         server=config.get('SQL_DB', 'SERVER'),
                         database=config.get('SQL_DB', 'DB_NAME'),
-                        # ldap=True,
                         use_native_driver=True,
-                        user=config.get('SQL_DB', 'DB_USER'),
-                        password=config.get('SQL_DB', 'DB_PASSWORD'))
+                        ldap=True)
 
 
 sql2 = pysqldb.DbConnect(type=config.get('SECOND_SQL_DB', 'TYPE'),
                         server=config.get('SECOND_SQL_DB', 'SERVER'),
                         database=config.get('SECOND_SQL_DB', 'DB_NAME'),
                         # ldap=True,
-                        user=config.get('SECOND_SQL_DB', 'DB_USER'),
-                        password=config.get('SECOND_SQL_DB', 'DB_PASSWORD'),
+                        ldap=True,
                         use_native_driver=True)
 
 def test_connect():

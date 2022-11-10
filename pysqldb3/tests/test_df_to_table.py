@@ -17,8 +17,7 @@ db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
 sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         server=config.get('SQL_DB', 'SERVER'),
                         database=config.get('SQL_DB', 'DB_NAME'),
-                        user=config.get('SQL_DB', 'DB_USER'),
-                        password=config.get('SQL_DB', 'DB_PASSWORD'))
+                        ldap=True)
 
 table_name = 'test_df_to_table_{}'.format(db.user)
 
