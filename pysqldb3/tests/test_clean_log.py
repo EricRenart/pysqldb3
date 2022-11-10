@@ -16,8 +16,7 @@ db = pysqldb.DbConnect(type=config.get('PG_DB', 'TYPE'),
 sql = pysqldb.DbConnect(type=config.get('SQL_DB', 'TYPE'),
                         server=config.get('SQL_DB', 'SERVER'),
                         database=config.get('SQL_DB', 'DB_NAME'),
-                        user=config.get('SQL_DB', 'DB_USER'),
-                        password=config.get('SQL_DB', 'DB_PASSWORD'),
+                        ldap=True,
                         allow_temp_tables=True)
 
 test_clean_up_new_table = 'test_new_table_testing_{}'.format(db.user)

@@ -16,8 +16,7 @@ db = pysqldb.DbConnect(default=True, password=test_config.get('PG_DB', 'DB_PASSW
 sql = pysqldb.DbConnect(type=test_config.get('SQL_DB', 'TYPE'),
                         server=test_config.get('SQL_DB', 'SERVER'),
                         database=test_config.get('SQL_DB', 'DB_NAME'),
-                        user=test_config.get('SQL_DB', 'DB_USER'),
-                        password=test_config.get('SQL_DB', 'DB_PASSWORD'))
+                        ldap=True)
 
 pg_table_name = 'pg_test_table_{}'.format(db.user)
 sql_table_name = 'sql_test_table_{}'.format(sql.user)
